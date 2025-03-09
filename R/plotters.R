@@ -698,7 +698,10 @@ make_heatmap <- function(input_matrix, ref_data, sample_data, interactive = FALS
 #' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
 #' sendsketch_taxonomy_plot(path)
 #' sendsketch_taxonomy_plot(path, interactive = TRUE)
-#'
+#' \dontshow{
+#' ## R CMD check: make sure any open connections are closed afterward
+#' closeAllConnections()
+#' }
 #' @export
 sendsketch_taxonomy_plot <- function(path, interactive = FALSE, ...) {
 

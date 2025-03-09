@@ -24,5 +24,8 @@ sunburst plot.
 path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
 sendsketch_taxonomy_plot(path)
 sendsketch_taxonomy_plot(path, interactive = TRUE)
-
+\dontshow{
+## R CMD check: make sure any open connections are closed afterward
+closeAllConnections()
+}
 }
