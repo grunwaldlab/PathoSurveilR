@@ -188,9 +188,9 @@ estimated_ani_match_table <- function(path, interactive = FALSE, ...) {
 
   # Print table
   output$best_ref_value <- ifelse(is.na(output$best_ref_value),
-                                          "NA (Too few samples)", format_number(output$best_ref_value))
+                                          "NA", format_number(output$best_ref_value))
   output$best_sample_value <- ifelse(is.na(output$best_sample_value),
-                                             "NA (Too few samples)", format_number(output$best_sample_value))
+                                             "NA", format_number(output$best_sample_value))
   colnames(output) <- c('Sample', 'Closest reference', 'Reference ANI (%)', 'Closest sample', 'Sample ANI (%)')
   if (interactive) {
     output <- DT::datatable(output, class = "display nowrap", ...)
@@ -231,9 +231,9 @@ pocp_match_table <- function(path, interactive = FALSE, ...) {
 
   # Print table
   output$best_ref_value <- ifelse(is.na(output$best_ref_value),
-                                          "NA (Too few samples)", format_number(output$best_ref_value))
+                                          "NA", format_number(output$best_ref_value))
   output$best_sample_value <- ifelse(is.na(output$best_sample_value),
-                                             "NA (Too few samples)", format_number(output$best_sample_value))
+                                             "NA", format_number(output$best_sample_value))
   colnames(output) <- c('Sample', 'Closest reference', 'Reference POCP (%)', 'Closest sample', 'Sample POCP (%)')
   if (interactive) {
     output <- DT::datatable(output, class = "display nowrap", ...)
@@ -260,24 +260,26 @@ make_best_match_table <- function(pairwise_matrices, sample_data, ref_data) {
     sample_ids <- sample_data$sample_id[sample_data$sample_id %in% colnames(pairwise_matrix)]
     ref_ids <- ref_data$ref_id[ref_data$ref_id %in% colnames(pairwise_matrix)]
     do.call(rbind, lapply(sample_ids, function(id) { # loop over sample IDs and combine results into a table
+      best_ref_match_name <- NA
+      best_ref_match_value <- NA
       if (length(ref_ids) >= 1) {
         ref_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% ref_data$ref_id, drop = FALSE]
-        best_ref_match_id <- names(which.max(ref_samp_comp))
-        best_ref_match_value <- unname(unlist(ref_samp_comp[best_ref_match_id]))
-        best_ref_match_name <- ref_data$ref_name[ref_data$ref_id == best_ref_match_id]
-      } else {
-        best_ref_match_name <- NA
-        best_ref_match_value <- NA
-      }
+        if (! all(is.na(ref_samp_comp))) {
+          best_ref_match_id <- names(which.max(ref_samp_comp))
+          best_ref_match_value <- unname(unlist(ref_samp_comp[best_ref_match_id]))
+          best_ref_match_name <- ref_data$ref_name[ref_data$ref_id == best_ref_match_id]
+        }
+      } 
+      best_samp_match_name <- NA
+      best_samp_match_value <- NA
       if (length(sample_ids) > 1) {
         samp_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% sample_ids & colnames(pairwise_matrix) != id, drop = FALSE]
-        best_samp_match_id <- names(which.max(samp_samp_comp))
-        best_samp_match_value <- unname(unlist(samp_samp_comp[best_samp_match_id]))
-        best_samp_match_name <- sample_data$name[sample_data$sample_id == best_samp_match_id]
-      } else {
-        best_samp_match_name <- NA
-        best_samp_match_value <- NA
-      }
+        if (! all(is.na(samp_samp_comp))) {
+          best_samp_match_id <- names(which.max(samp_samp_comp))
+          best_samp_match_value <- unname(unlist(samp_samp_comp[best_samp_match_id]))
+          best_samp_match_name <- sample_data$name[sample_data$sample_id == best_samp_match_id]
+        }
+      } 
       data.frame(
         check.names = FALSE,
         sample_name = sample_data$name[sample_data$sample_id == id],
