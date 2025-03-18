@@ -1,14 +1,14 @@
 
 # `PathoSurveilR`: an R package for analysis of the `pathogensurveillance` pipeline
 
-`PathoSurveilR` is an R package with functions that can read, summarize, plot,
-and manipulate data produced by the pipeline
+`PathoSurveilR` is an R package with functions that can read, summarize,
+plot, and manipulate data produced by the pipeline
 [`pathogensurveillance`](https://github.com/nf-core/pathogensurveillance).
 
 ## Installation
 
-Although `PathoSurveilR` is not on CRAN yet, you can install the development
-version from the source code on Github:
+Although `PathoSurveilR` is not on CRAN yet, you can install the
+development version from the source code on Github:
 
 ``` r
 install.packages("devtools")
@@ -17,10 +17,10 @@ devtools::install_github("grunwaldlab/PathoSurveilR")
 
 ## Introduction
 
-Most functions in the `PathoSurveilR` package have the same way of accepting
-input. Given one or more directory paths, functions will find their
-needed input in any `pathogensurveillance` output directories that are
-in the given directories. For example, an output directory of
+Most functions in the `PathoSurveilR` package have the same way of
+accepting input. Given one or more directory paths, functions will find
+their needed input in any `pathogensurveillance` output directories that
+are in the given directories. For example, an output directory of
 `pathogensurveillance` is included in the package and its path on your
 computer can be found like so:
 
@@ -33,9 +33,9 @@ print(path)
     ## [1] "/home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/PathoSurveilR/extdata/ps_output"
 
 This path can then be used as the only required input for nearly every
-function in `PathoSurveilR`. For example, here is how to get the multigene
-phylogeny plot, which contains core gene phylogenies for prokaryotes and
-busco phylogenies for eukaryotes:
+function in `PathoSurveilR`. For example, here is how to get the
+multigene phylogeny plot, which contains core gene phylogenies for
+prokaryotes and busco phylogenies for eukaryotes:
 
 ``` r
 multigene_tree_plot(path)[[2]]  # This function returns a list of plots, so [[2]] selects the second plot
@@ -167,10 +167,10 @@ Listeria welshimeri
 0.9920
 </td>
 <td style="text-align:left;">
-LR2
+NA
 </td>
 <td style="text-align:left;">
-0
+NA
 </td>
 </tr>
 <tr>
@@ -427,8 +427,8 @@ core_tree_path_data(path)
     ## # A tibble: 2 × 3
     ##   report_group_id path                                                cluster_id
     ##   <chr>           <chr>                                               <chr>     
-    ## 1 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/ps… 1         
-    ## 2 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/ps… 2
+    ## 1 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/Pa… 1         
+    ## 2 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/Pa… 2
 
 ``` r
 sendsketch_path_data(path)
@@ -437,11 +437,11 @@ sendsketch_path_data(path)
     ## # A tibble: 19 × 3
     ##   report_group_id path                                                 sample_id
     ##   <chr>           <chr>                                                <chr>    
-    ## 1 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/psm… FF1      
-    ## 2 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/psm… LF1      
-    ## 3 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/psm… LF2      
-    ## 4 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/psm… LF3      
-    ## 5 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/psm… LF4      
+    ## 1 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/Pat… FF1      
+    ## 2 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/Pat… LF1      
+    ## 3 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/Pat… LF2      
+    ## 4 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/Pat… LF3      
+    ## 5 all             /home/fosterz/R/x86_64-pc-linux-gnu-library/4.4/Pat… LF4      
     ## # ℹ 14 more rows
 
 You can also get parsed versions of all of these `pathogensuriveillance`
@@ -495,8 +495,8 @@ core_tree_parsed(path)
 
 Functions that use the same data always start with the same words, so if
 you know what data out want to look at, you can see all the ways that
-`PathoSurveilR` can interact with it by typing `PathoSurveilR::` in an IDE like
-RStudio followed by the data type name and hit `<TAB>` to see
+`PathoSurveilR` can interact with it by typing `PathoSurveilR::` in an
+IDE like RStudio followed by the data type name and hit `<TAB>` to see
 autocomplete suggestions. For example `PathoSurveilR::estimated_ani_` +
 `<TAB>` will show all of these functions:
 
@@ -513,9 +513,10 @@ License](https://github.com/grunwaldlab/metacoder/blob/master/LICENSE).
 
 ## Credits
 
-The following people contributed to `PathoSurveilR`: Zachary S.L. Foster,
-Martha Sudermann, Camilo Parada-Rojas, Logan K. Blair, Fernanda I.
-Bocardo, Ricardo Alcalá-Briseño, Jeﬀ H. Chang, and Niklaus J. Grünwald.
+The following people contributed to `PathoSurveilR`: Zachary S.L.
+Foster, Martha Sudermann, Camilo Parada-Rojas, Logan K. Blair, Fernanda
+I. Bocardo, Ricardo Alcalá-Briseño, Jeﬀ H. Chang, and Niklaus J.
+Grünwald.
 
 ## Funding
 
@@ -528,3 +529,7 @@ FNRI and USDA APHIS to Niklaus J. Grünwald
 
 We welcome suggestions, bug reports and contributions! Make and issue on
 this repository to get in contact with us.
+
+------------------------------------------------------------------------
+
+![](images/combined_logos.png)
