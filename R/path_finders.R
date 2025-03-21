@@ -304,7 +304,7 @@ variant_tree_path <- function(path) {
 #' @keywords internal
 find_static_file_path <- function(path, file_name, file_description, file_required = TRUE) {
 
-  group_result_paths <- find_group_result_path(path)
+  group_result_paths <- find_report_input_result_path(path)
 
   find_one <- function(p) {
     output_path <- file.path(p, file_name)
@@ -332,7 +332,7 @@ find_static_file_path <- function(path, file_name, file_description, file_requir
 #' @keywords internal
 find_static_dir_path <- function(path, dir_name, file_description, dir_required = TRUE, file_required = TRUE, ...) {
 
-  group_result_paths <- find_group_result_path(path)
+  group_result_paths <- find_report_input_result_path(path)
 
   # List files in target directories
   find_one <- function(p) {
@@ -376,7 +376,7 @@ find_static_dir_path <- function(path, dir_name, file_description, dir_required 
 #' that are the report group output of a pathogensurviellance run.
 #'
 #' @keywords internal
-find_group_result_path <- function(path) {
+find_report_input_result_path <- function(path) {
   subdir_paths <- list.dirs(path)
   is_valid_dir <- function(p) {
     group_id_path <- file.path(p, 'pathogensurveillance_run_info.yml')
@@ -385,3 +385,21 @@ find_group_result_path <- function(path) {
   subdir_paths <- subdir_paths[unlist(lapply(subdir_paths, is_valid_dir))]
   return(subdir_paths)
 }
+
+
+#' Find pipeline output directory paths
+#'
+#' For one or more paths, return the paths of subfolders (or the given folders)
+#' that are the entire output of a pathogensurviellance run.
+#'
+#' @keywords internal
+find_output_directory_path <- function(path) {
+  subdir_paths <- list.dirs(path)
+  is_valid_dir <- function(p) {
+    pipeline_yml_path <- file.path(p, 'pipeline_info', 'nf_core_pipeline_software_mqc_versions.yml')
+    file.exists(pipeline_yml_path) && any(grepl(readLines(pipeline_yml_path), pattern = 'pathogensurveillance'))
+  }
+  subdir_paths <- subdir_paths[unlist(lapply(subdir_paths, is_valid_dir))]
+  return(subdir_paths)
+}
+
