@@ -50,7 +50,7 @@ ref_meta_path <- function(path) {
 #'
 #' @export
 busco_tree_path <- function(path) {
-  find_static_dir_path(path, 'busco_trees', 'busco gene tree', file_required = FALSE, dir_required = FALSE)
+  find_static_dir_path(path, 'busco_trees', 'busco gene tree')
 }
 
 #' Find the BUSCO analysis reference data file path
@@ -68,7 +68,7 @@ busco_tree_path <- function(path) {
 #'
 #' @export
 busco_ref_path <- function(path) {
-  find_static_file_path(path, 'busco_tree_references.tsv', 'busco anaylsis reference file', file_required = FALSE)
+  find_static_file_path(path, 'busco_tree_references.tsv', 'busco anaylsis reference file')
 }
 
 #' Find the core gene analysis reference data file path
@@ -86,7 +86,7 @@ busco_ref_path <- function(path) {
 #'
 #' @export
 core_ref_path <- function(path) {
-  find_static_file_path(path, 'core_gene_tree_references.tsv', 'core gene analysis reference file', file_required = FALSE)
+  find_static_file_path(path, 'core_gene_tree_references.tsv', 'core gene analysis reference file')
 }
 
 #' Find the report group file path
@@ -140,7 +140,7 @@ variant_ref_path <- function(path) {
 #'
 #' @export
 status_message_path <- function(path) {
-  find_static_file_path(path, 'messages.tsv', 'status message data file', file_required = FALSE)
+  find_static_file_path(path, 'messages.tsv', 'status message data file')
 }
 
 #' Find the POCP matrix file path
@@ -158,7 +158,7 @@ status_message_path <- function(path) {
 #'
 #' @export
 pocp_matrix_path <- function(path) {
-  find_static_file_path(path, 'pocp.tsv', 'pocp matrix file', file_required = FALSE)
+  find_static_file_path(path, 'pocp.tsv', 'pocp matrix file')
 }
 
 #' Find the estimated ANI matrix file path
@@ -212,7 +212,7 @@ software_version_path <- function(path) {
 #'
 #' @export
 core_tree_path <- function(path) {
-  find_static_dir_path(path, 'core_gene_trees', 'core gene tree', file_required = FALSE, dir_required = FALSE)
+  find_static_dir_path(path, 'core_gene_trees', 'core gene tree')
 }
 
 #' Find the considered NCBI reference metadata paths
@@ -226,7 +226,7 @@ core_tree_path <- function(path) {
 #'
 #' @export
 considered_ref_meta_path <- function(path) {
-  find_static_dir_path(path, 'ncbi_reference_data', 'considered NCBI reference metadata')
+  find_static_dir_path(path, dir_name_report = 'ncbi_reference_data')
 }
 
 #' Find the downloaded reference metadata paths
@@ -244,7 +244,7 @@ considered_ref_meta_path <- function(path) {
 #'
 #' @export
 selected_ref_meta_path <- function(path) {
-  find_static_dir_path(path, 'selected_references', 'selected NCBI reference metadata')
+  find_static_dir_path(path, dir_name_output = 'pick_assemblies', dir_name_report = 'selected_references')
 }
 
 #' Find the sendsketch result paths
@@ -262,7 +262,7 @@ selected_ref_meta_path <- function(path) {
 #'
 #' @export
 sendsketch_path <- function(path) {
-  find_static_dir_path(path, 'sendsketch', 'sendsketch result')
+  find_static_dir_path(path, dir_name_output = 'bbmap_sendsketch', dir_name_report = 'sendsketch')
 }
 
 #' Find the SNP alignment paths
@@ -280,7 +280,7 @@ sendsketch_path <- function(path) {
 #'
 #' @export
 variant_align_path <- function(path) {
-  find_static_dir_path(path, 'snp_alignments', 'SNP alignment', dir_required = FALSE, file_required = FALSE)
+  find_static_dir_path(path, dir_name_output = 'vcf_to_snp_align', dir_name_report = 'snp_alignments')
 }
 
 #' Find the SNP tree paths
@@ -298,11 +298,11 @@ variant_align_path <- function(path) {
 #'
 #' @export
 variant_tree_path <- function(path) {
-  find_static_dir_path(path, 'snp_trees', 'SNP tree', dir_required = FALSE, file_required = FALSE)
+  find_static_dir_path(path, dir_name_output = 'iqtree2_snp', dir_name_report = 'snp_trees')
 }
 
 #' @keywords internal
-find_static_file_path <- function(path, file_name, file_description, file_required = TRUE) {
+find_static_file_path <- function(path, file_name, file_description) {
 
   group_result_paths <- find_report_input_result_path(path)
 
@@ -330,39 +330,37 @@ find_static_file_path <- function(path, file_name, file_description, file_requir
 }
 
 #' @keywords internal
-find_static_dir_path <- function(path, dir_name, file_description, dir_required = TRUE, file_required = TRUE, ...) {
+find_static_dir_path <- function(path, dir_name_output, dir_name_report, ...) {
 
-  group_result_paths <- find_report_input_result_path(path)
-
+  # Look for directories in both the output folder and report input directories
+  report_paths <- find_report_input_result_path(path)
+  output_paths <- find_output_directory_path(path)
+  
   # List files in target directories
-  find_one <- function(p) {
-    # Check that directory exists
+  find_one <- function(p, dir_name) {
     dir_path <- file.path(p, dir_name)
-    if (! file.exists(dir_path)) {
-      if (dir_required) {
-        stop(
-          call. = FALSE,
-          'Cannot locate the ', file_description, ' directory. It should be located at "',
-          dir_path, '". Verify that "', path,
-          '" is an pathogensurveillance output folder.'
-        )
-      } else {
-        return(character(0))
-      }
+    if (file.exists(dir_path)) {
+      out_paths <- list.files(dir_path, full.names = TRUE, ...)
+    } else {
+      out_paths <- character(0)
     }
-    # List files inside directory
-    out_paths <- list.files(dir_path, full.names = TRUE, ...)
-    if (file_required && length(out_paths) == 0) {
-      stop(
-        call. = FALSE,
-        'No files found in the ', file_description, ' directory. It should be located at "',
-        dir_path, '". Verify that "', path,
-        '" is an pathogensurveillance output folder.'
-      )
-    }
-    return(out_paths)
+    out_paths[file.exists(out_paths)]
   }
-  output <- unlist(lapply(group_result_paths, find_one))
+  report_files <- lapply(report_paths, function(x) find_one(x, dir_name_report))
+  output_files <- lapply(output_paths, function(x) find_one(x, dir_name_output))
+  
+  # Ignore files in report input if also present in entire output
+  is_redundant <- vapply(seq_len(length(report_paths)), FUN.VALUE = logical(1), function(i) {
+    is_nested <- startsWith(report_paths[i], prefix = output_paths)
+    if (all(! is_nested)) {
+      return(FALSE)
+    } 
+    return(length(report_files[[i]]) > 0 & length(output_files[[which(is_nested)]]) > 0)
+  })
+  report_files <- report_files[! is_redundant]
+  
+  # Return all files found in all directories
+  output <- unlist(c(output_files, report_files))
   if (is.null(output)) {
     output <- character(0)
   }
@@ -383,7 +381,7 @@ find_report_input_result_path <- function(path) {
     return(file.exists(group_id_path))
   }
   subdir_paths <- subdir_paths[unlist(lapply(subdir_paths, is_valid_dir))]
-  return(subdir_paths)
+  return(unique(subdir_paths))
 }
 
 
@@ -400,6 +398,6 @@ find_output_directory_path <- function(path) {
     file.exists(pipeline_yml_path) && any(grepl(readLines(pipeline_yml_path), pattern = 'pathogensurveillance'))
   }
   subdir_paths <- subdir_paths[unlist(lapply(subdir_paths, is_valid_dir))]
-  return(subdir_paths)
+  return(unique(subdir_paths))
 }
 
