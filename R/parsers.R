@@ -212,6 +212,7 @@ run_info_parsed <- function(path) {
 #'   pathogensurveillance output.
 #' @param only_best Only return the best hit for each combination of report
 #'   group and sample.
+#' @inheritParams sendsketch_path_data
 #'
 #' @return A [tibble::tibble()] with the sendsketch output combined
 #' @family parsers
@@ -221,9 +222,9 @@ run_info_parsed <- function(path) {
 #' sendsketch_parsed(path)
 #'
 #' @export
-sendsketch_parsed <- function(path, only_best = FALSE) {
-  path_data <- sendsketch_path_data(path)
-
+sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE) {
+  path_data <- sendsketch_path_data(path, sample_id = sample_id)
+  
   # If no files are found, return an empty tibble
   if (nrow(path_data) == 0) {
     return(tibble::tibble())
@@ -271,6 +272,7 @@ sendsketch_parsed <- function(path, only_best = FALSE) {
 #' @param remove_ranks If `TRUE`, remove the rank information from the taxonomy.
 #' @param only_best Only return the best hit for each combination of report
 #'   group and sample. 
+#' @inheritParams sendsketch_parsed
 #'
 #' @return A [base::character()] vector of taxonomic classifications, each
 #'   delimited with `;`, named by sample IDs.
@@ -281,8 +283,8 @@ sendsketch_parsed <- function(path, only_best = FALSE) {
 #' sendsketch_taxonomy_parsed(path)
 #'
 #' @export
-sendsketch_taxonomy_parsed <- function(path, remove_ranks = FALSE, only_best = FALSE) {
-  sendsketch_data <- sendsketch_parsed(path, only_best = TRUE)
+sendsketch_taxonomy_parsed <- function(path, sample_id = NULL, remove_ranks = FALSE, only_best = FALSE) {
+  sendsketch_data <- sendsketch_parsed(path, sample_id = sample_id, only_best = TRUE)
   classifications <- sendsketch_data$taxonomy
   if (remove_ranks) {
     classifications <- gsub(classifications, pattern = ';?[a-z]+:', replacement = ';')
@@ -303,7 +305,7 @@ sendsketch_taxonomy_parsed <- function(path, remove_ranks = FALSE, only_best = F
 #'   pathogensurveillance output.
 #' @param only_best Only return the best hit for each combination of report
 #'   group and sample.
-#' @param only_shared If `TRUE`, only return the data for that are present in
+#' @param only_shared If `TRUE`, only return the ranks that are present in
 #'   all of the inputs.
 #'
 #' @return A [tibble::tibble()] with taxonomy data, with columns corresponding
@@ -348,6 +350,28 @@ sendsketch_taxonomy_data_parsed <- function(path, only_best = FALSE, only_shared
   }
 
   return(tibble::as_tibble(output))
+}
+
+
+
+#' Get taxa predicted by sendsketch results
+#'
+#' Return which taxa are predicted to be present given sendsketch results
+#' associated with directory paths containing `pathogensurveillance` output.
+#'
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
+#' @param only_best Only return taxa predicted by the best hit for each
+#'   combination of report group and sample.
+#' @inheritParams sendsketch_parsed
+#'
+#' @return A [tibble::tibble()] with one row per taxon found
+#' @family parsers
+#'
+#' @export
+sendsketch_taxa_present <- function(path, sample_id = NULL, only_best = FALSE) {
+  ss_results <- sendsketch_parsed(path, sample_id = sample_id)
+  ss_tax_data <- sendsketch_taxonomy_data_parsed(path, sample_id = sample_id)
 }
 
 
@@ -600,6 +624,7 @@ considered_ref_meta_parsed <- function(path = NULL, family = NULL, json_path = N
       attributes <- assem_data$assembly_info$biosample$attributes
       hosts <- paste0(attributes$value[attributes$name == 'host'], collapse = ';')
       data_parts <- list(
+        reference_id = gsub(assem_data$accession, pattern = '[\\/:*?"<>| .]', replacement = '_'),
         accession = assem_data$accession,
         assembly_level = assem_data$assembly_info$assembly_level,
         assembly_status = assem_data$assembly_info$assembly_status,
@@ -634,6 +659,7 @@ considered_ref_meta_parsed <- function(path = NULL, family = NULL, json_path = N
   assem_data <- do.call(rbind, json_data)
   if (is.null(assem_data)) {
     assem_data <- data.frame(
+      reference_id = character(0),
       accession = character(0),
       assembly_level = character(0),
       assembly_status = character(0),

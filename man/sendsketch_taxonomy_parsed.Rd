@@ -4,11 +4,19 @@
 \alias{sendsketch_taxonomy_parsed}
 \title{Get parsed sendsketch taxonomy}
 \usage{
-sendsketch_taxonomy_parsed(path, remove_ranks = FALSE, only_best = FALSE)
+sendsketch_taxonomy_parsed(
+  path,
+  sample_id = NULL,
+  remove_ranks = FALSE,
+  only_best = FALSE
+)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
+
+\item{sample_id}{One or more sample IDs to return data for. By default, data
+for all samples is returned.}
 
 \item{remove_ranks}{If \code{TRUE}, remove the rank information from the taxonomy.}
 
@@ -34,6 +42,7 @@ Other parsers:
 \code{\link{core_tree_parsed}()},
 \code{\link{multigene_tree_parsed}()},
 \code{\link{sendsketch_parsed}()},
+\code{\link{sendsketch_taxa_present}()},
 \code{\link{sendsketch_taxonomy_data_parsed}()},
 \code{\link{software_version_parsed}()},
 \code{\link{tree_parsed}()},

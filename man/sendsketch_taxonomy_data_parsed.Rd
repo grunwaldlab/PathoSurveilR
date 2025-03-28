@@ -13,7 +13,7 @@ pathogensurveillance output.}
 \item{only_best}{Only return the best hit for each combination of report
 group and sample.}
 
-\item{only_shared}{If \code{TRUE}, only return the data for that are present in
+\item{only_shared}{If \code{TRUE}, only return the ranks that are present in
 all of the inputs.}
 }
 \value{
@@ -37,6 +37,7 @@ Other parsers:
 \code{\link{core_tree_parsed}()},
 \code{\link{multigene_tree_parsed}()},
 \code{\link{sendsketch_parsed}()},
+\code{\link{sendsketch_taxa_present}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
 \code{\link{software_version_parsed}()},
 \code{\link{tree_parsed}()},

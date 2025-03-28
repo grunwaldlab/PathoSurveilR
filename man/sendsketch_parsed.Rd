@@ -4,11 +4,14 @@
 \alias{sendsketch_parsed}
 \title{Get parsed sendsketch results}
 \usage{
-sendsketch_parsed(path, only_best = FALSE)
+sendsketch_parsed(path, sample_id = NULL, only_best = FALSE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
+
+\item{sample_id}{One or more sample IDs to return data for. By default, data
+for all samples is returned.}
 
 \item{only_best}{Only return the best hit for each combination of report
 group and sample.}
@@ -30,6 +33,7 @@ Other parsers:
 \code{\link{busco_tree_parsed}()},
 \code{\link{core_tree_parsed}()},
 \code{\link{multigene_tree_parsed}()},
+\code{\link{sendsketch_taxa_present}()},
 \code{\link{sendsketch_taxonomy_data_parsed}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
 \code{\link{software_version_parsed}()},
