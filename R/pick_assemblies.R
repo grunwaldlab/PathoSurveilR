@@ -1,5 +1,3 @@
-
-
 #' Pick assemblies to provide context for one or more taxa
 #'
 #' Pick assemblies to provide context for one or more taxa. For each taxon

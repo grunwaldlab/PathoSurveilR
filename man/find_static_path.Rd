@@ -4,7 +4,7 @@
 \alias{find_static_path}
 \title{Find files in pathogensurveillance output}
 \usage{
-find_static_path(path, output_path, report_path, return_contents = FALSE, ...)
+find_static_path(path, output_path, report_path, return_contents = TRUE, ...)
 }
 \arguments{
 \item{path}{One or more paths to search}
@@ -15,7 +15,7 @@ pathogensurveillance output.}
 \item{report_path}{The path of the file/directory relative to the entire
 report input directory.}
 
-\item{return_contents}{If \code{TRUE}, if \code{path} is a directory, return the files
+\item{return_contents}{If \code{TRUE} (the default), if \code{path} is a directory, return the files
 in that directory rather than the directory itself.}
 }
 \description{

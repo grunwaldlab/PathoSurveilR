@@ -4,10 +4,15 @@
 \alias{sample_meta_path}
 \title{Find sample metadata file path}
 \usage{
-sample_meta_path(path)
+sample_meta_path(path, from_report_input = TRUE)
 }
 \arguments{
-\item{path}{The path to one or more folders that contain pathogensurveillance output.}
+\item{path}{The path to one or more folders that contain pathogensurveillance
+output.}
+
+\item{from_report_input}{If \code{TRUE} (the default), return the version of the
+metadata passed to the report rather than the first parsed version of the
+user metadata used for all report groups.}
 }
 \value{
 character vector of length 1

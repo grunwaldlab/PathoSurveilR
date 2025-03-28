@@ -4,10 +4,14 @@
 \alias{ref_meta_path}
 \title{Find reference metadata file path}
 \usage{
-ref_meta_path(path)
+ref_meta_path(path, from_report_input = TRUE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance output.}
+
+\item{from_report_input}{If \code{TRUE} (the default), return the version of the
+metadata passed to the report rather than the first parsed version of the
+user metadata used for all report groups.}
 }
 \value{
 character vector of length 1

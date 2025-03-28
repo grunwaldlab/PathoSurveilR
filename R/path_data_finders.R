@@ -245,8 +245,9 @@ core_tree_path_data <- function(path) {
 considered_ref_meta_path_data <- function(path) {
   output <- make_path_data_with_group(path, considered_ref_meta_path)
   output$family <- unlist(lapply(basename(output$path), function(file_name) {
-    sub(file_name, pattern = '\\.tsv$', replacement = '')
+    sub(file_name, pattern = '\\.json$', replacement = '')
   }))
+  output <- output[c('report_group_id', 'family', 'path')]
   return(output)
 }
 

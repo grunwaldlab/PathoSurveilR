@@ -13,7 +13,7 @@ considered_ref_meta_path(path)
 character vector of length 1
 }
 \description{
-Return the file paths of the TSVs of metadata for references considered by
+Return the file paths of the JSONs of metadata for references considered by
 the pipeline for download for a given pathogensurveillance output folder.
 }
 \seealso{
