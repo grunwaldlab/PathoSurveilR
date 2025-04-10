@@ -86,15 +86,25 @@ status_message_table <- function(paths, summarize_by = NULL, interactive = FALSE
 
   # Summarize by sample
   summarize_by_factor <- function(table, by) {
-    table <- do.call(rbind, lapply(split(table, table[[by]]), function(part) {
-      data.frame(
-        x = unique(part[[by]]),
-        notes = sum(part$level == 'NOTE'),
-        warnings = sum(part$level == 'WARNING'),
-        errors = sum(part$level == 'ERROR'),
-        status = max(part$status)
+    if (nrow(table) == 0) {
+      table <- data.frame(
+        x = character(0),
+        notes = numeric(0),
+        warnings = numeric(0),
+        errors = numeric(0),
+        status = factor(0)
       )
-    }))
+    } else {
+      table <- do.call(rbind, lapply(split(table, table[[by]]), function(part) {
+        data.frame(
+          x = unique(part[[by]]),
+          notes = sum(part$level == 'NOTE'),
+          warnings = sum(part$level == 'WARNING'),
+          errors = sum(part$level == 'ERROR'),
+          status = max(part$status)
+        )
+      }))
+    }
     colnames(table)[1] <- by
     rownames(table) <- NULL
     return(table)

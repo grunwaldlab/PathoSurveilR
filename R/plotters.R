@@ -252,7 +252,7 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
     # Combine trees
     base_tree <- ape::as.phylo(stats::as.formula(paste0('~', paste0(ranks, collapse = '/'))), data = tree_tax_data)
     mean_edge_len <- mean(unlist(lapply(trees, function(x) x$edge.length)))
-    base_tree$edge.length <- rep(mean_edge_len, nrow(base_tree$edge))
+    base_tree$edge.length <- rep(mean_edge_len / 4, nrow(base_tree$edge))
     combined_tree <- base_tree
     tip_rank <- as.character(tree_tax_data[, ranks[length(ranks)]])
     index_key <- match(base_tree$tip.label, tip_rank)
@@ -330,13 +330,16 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
     ggplot2::scale_color_identity() +
     ggplot2::scale_linetype_identity()
   plotted_tree <- plotted_tree %<+% tip_data +
-    scale_x_continuous(expand = ggplot2::expansion(add = c(0.1, 0.1 + max(nchar(tip_data$tip_label)) * 0.1 / sqrt(nrow(tip_data))))) +
+    scale_x_continuous(expand = ggplot2::expansion(add = c(0.1, 0.2 + max(nchar(tip_data$tip_label)) * 0.12 / sqrt(nrow(tip_data))))) +
     ggnewscale::new_scale_color() +
     geom_tiplab(ggplot2::aes_string(label = 'tip_label', color = 'tip_color'), size = tip_label_size) +
     geom_tippoint(ggplot2::aes_string(color = 'tip_color'), alpha = 0) + # Invisible tips just there to make override.aes below change the legend color shapes
     ggplot2::scale_color_viridis_d(end = 0.8, na.value = "black") +
     ggplot2::guides(color = guide_legend(title = legend_title, override.aes = list(label = "", size = 3, alpha = 1, shape = 15))) +
-    theme(legend.position = "bottom")
+    theme(
+      legend.position = "bottom",
+      plot.margin = margin(1,1,1,1, "cm")
+    )
 
   return(plotted_tree)
 }

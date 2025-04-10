@@ -73,13 +73,13 @@ pick_assemblies <- function(
       'uncultured',
       'unknown',
       'incertae sedis',
-      'sp.'
+      'sp\\.',
+      'cf\\.',
+      'endosymbiont',
+      'symbiont'
     )
-    vapply(x, FUN.VALUE = logical(1), function(one) {
-      any(vapply(ambiguous_words, FUN.VALUE = logical(1), function(word) {
-        grepl(one, pattern = word, ignore.case = TRUE)
-      }))
-    })
+    ambiguous_pattern <- paste0('\\b', ambiguous_words, '\\b', collapse = '|')
+    grepl(x, pattern = ambiguous_pattern, ignore.case = TRUE)
   }
   is_latin_binomial <- function(x) {
     grepl(x, pattern = '^[a-zA-Z]+ [a-zA-Z]+($| ).*$') & ! is_ambiguous(x)
@@ -133,13 +133,17 @@ pick_assemblies <- function(
       })
       names(selected) <- subtaxa_found
       
+      # Parse count attributes, which can be percentages or integers
+      count_per_rank <- get_count(length(selected), count_per_rank)
+      count_per_subrank <- get_count(length(selected), count_per_subrank)
+      
       # Pick subtaxa with the most assemblies and best mean attributes (based on order in input)
       mean_index <- vapply(selected, mean, FUN.VALUE = numeric(1))
       subtaxa_count <- vapply(selected, length, FUN.VALUE = numeric(1))
-      selection_priority <- order(
-        is_ambiguous(names(selected)),
-        -subtaxa_count,
-        mean_index
+      selection_priority <- order(decreasing = TRUE,
+                                  is_ambiguous(names(selected)) == FALSE,
+                                  subtaxa_count,
+                                  -mean_index
       )
       selected <- selected[selection_priority]
       selected <- selected[seq_len(min(c(count_per_rank, length(selected))))]
@@ -196,17 +200,18 @@ pick_assemblies <- function(
       ref_color_by = character(0)
     )
   } else {
+    suffix <- paste0(
+      ifelse(result$is_type, 'T', ''),
+      ifelse(result$source_database == 'SOURCE_DATABASE_REFSEQ', 'R', ''),
+      ifelse(result$is_atypical, 'A', '')
+    )
     formatted_result <- data.frame(
       ref_id = result$reference_id,
       ref_name = result$organism_name,
       ref_description = paste0(
-        result$species, ' (',
+        result$organism_name, ' ',
         result$accession,
-        ifelse(result$is_type, '; T', ''),
-        ifelse(result$source_database == 'SOURCE_DATABASE_REFSEQ', '; RS', ''),
-        ifelse(result$is_atypical, '; A', ''),
-        # ifelse(is.na(result$hosts), '', paste0('; Host: ', result$hosts)),
-        ')'
+        ifelse(nchar(suffix) > 0, paste0(' ', suffix), '')
       ),
       ref_path = '',
       ref_ncbi_accession = result$accession,
