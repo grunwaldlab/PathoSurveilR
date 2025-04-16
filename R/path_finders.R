@@ -5,9 +5,6 @@
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @param from_report_input If `TRUE` (the default), return the version of the
-#'   metadata passed to the report rather than the first parsed version of the
-#'   user metadata used for all report groups.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -16,13 +13,16 @@
 #' sample_meta_path(path)
 #'
 #' @export
-sample_meta_path <- function(path, from_report_input = TRUE) {
-  if (from_report_input) {
-    return(find_static_path(path, output_path = character(0), report_path = 'sample_data.tsv'))
-  } else {
-    return(find_static_path(path, output_path = 'pipeline_info/sample_metadata.tsv', report_path = character(0)))
-  }
+sample_meta_path <- function(path) {
+  find_path(
+    path,
+    out_dir_subpath = 'metadata',
+    out_dir_pattern = '^sample_metadata\\.tsv$',
+    report_dir_subpath = '',
+    report_dir_pattern =  '^sample_data\\.tsv$'
+  )
 }
+
 
 #' Find reference metadata file path
 #'
@@ -30,9 +30,6 @@ sample_meta_path <- function(path, from_report_input = TRUE) {
 #' pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
-#' @param from_report_input If `TRUE` (the default), return the version of the
-#'   metadata passed to the report rather than the first parsed version of the
-#'   user metadata used for all report groups.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -41,13 +38,16 @@ sample_meta_path <- function(path, from_report_input = TRUE) {
 #' ref_meta_path(path)
 #'
 #' @export
-ref_meta_path <- function(path, from_report_input = TRUE) {
-  if (from_report_input) {
-    return(find_static_path(path, output_path = character(0), report_path = 'reference_data.tsv'))
-  } else {
-    return(find_static_path(path, output_path = 'pipeline_info/reference_metadata.tsv', report_path = character(0)))
-  }
+ref_meta_path <- function(path) {
+  find_path(
+    path,
+    out_dir_subpath = 'metadata',
+    out_dir_pattern = '^reference_metadata\\.tsv$',
+    report_dir_subpath = '',
+    report_dir_pattern =  '^reference_data\\.tsv$'
+  )
 }
+
 
 #' Find the BUSCO tree file path
 #'
@@ -65,8 +65,15 @@ ref_meta_path <- function(path, from_report_input = TRUE) {
 #'
 #' @export
 busco_tree_path <- function(path) {
-  find_static_path(path, output_path = 'iqtree2_busco', report_path = 'busco_trees')
+  find_path(
+    path,
+    out_dir_subpath = 'trees/busco',
+    out_dir_pattern = '\\.treefile$',
+    report_dir_subpath = 'busco_trees',
+    report_dir_pattern = '\\.treefile$'
+  )
 }
+
 
 #' Find the BUSCO analysis reference data file path
 #'
@@ -83,8 +90,15 @@ busco_tree_path <- function(path) {
 #'
 #' @export
 busco_ref_path <- function(path) {
-  find_static_path(path, output_path = 'assign_busco_references', report_path = 'busco_tree_references.tsv')
+  find_path(
+    path,
+    out_dir_subpath = 'reference_data/selected',
+    out_dir_pattern = '_busco_references\\.tsv$',
+    report_dir_subpath = '',
+    report_dir_pattern = '^busco_tree_references\\.tsv$'
+  )
 }
+
 
 #' Find the core gene analysis reference data file path
 #'
@@ -101,8 +115,15 @@ busco_ref_path <- function(path) {
 #'
 #' @export
 core_ref_path <- function(path) {
-  find_static_path(path, output_path = 'assign_core_references', report_path = 'core_gene_tree_references.tsv')
+  find_path(
+    path,
+    out_dir_subpath = 'reference_data/selected',
+    out_dir_pattern = '_core_references\\.tsv$',
+    report_dir_subpath = '',
+    report_dir_pattern = '^core_gene_tree_references\\.tsv$'
+  )
 }
+
 
 #' Find the report group file path
 #'
@@ -119,8 +140,15 @@ core_ref_path <- function(path) {
 #'
 #' @export
 run_info_path <- function(path) {
-  find_static_path(path, output_path = NULL, report_path = 'pathogensurveillance_run_info.yml')
+  find_path(
+    path,
+    out_dir_subpath = 'pipeline_info',
+    out_dir_pattern = '^pathogensurveillance_run_info\\.yml$',
+    report_dir_subpath = '',
+    report_dir_pattern = '^pathogensurveillance_run_info\\.yml$'
+  )
 }
+
 
 #' Find the variant analysis reference data file path
 #'
@@ -137,8 +165,15 @@ run_info_path <- function(path) {
 #'
 #' @export
 variant_ref_path <- function(path) {
-  find_static_path(path, output_path = 'assign_mapping_reference', report_path = 'mapping_references.tsv')
+  find_path(
+    path,
+    out_dir_subpath = 'reference_data/selected',
+    out_dir_pattern = '_mapping_references\\.tsv$',
+    report_dir_subpath = '',
+    report_dir_pattern = '^mapping_references\\.tsv$'
+  )
 }
+
 
 #' Find the status message TSV file path
 #'
@@ -155,8 +190,15 @@ variant_ref_path <- function(path) {
 #'
 #' @export
 status_message_path <- function(path) {
-  find_static_path(path, output_path = NULL, report_path = 'messages.tsv')
+  find_path(
+    path,
+    out_dir_subpath = 'pipeline_info',
+    out_dir_pattern = '^messages\\.tsv$',
+    report_dir_subpath = '',
+    report_dir_pattern = '^messages\\.tsv$'
+  )
 }
+
 
 #' Find the POCP matrix file path
 #'
@@ -173,15 +215,26 @@ status_message_path <- function(path) {
 #'
 #' @export
 pocp_matrix_path <- function(path) {
-  find_static_path(path, output_path = 'calculate_pocp', report_path = 'pocp.tsv')
+  find_path(
+    path,
+    out_dir_subpath = 'pocp',
+    out_dir_pattern = '_pocp\\.tsv$',
+    report_dir_subpath = '',
+    report_dir_pattern = '^pocp\\.tsv$'
+  )
 }
+
 
 #' Find the estimated ANI matrix file path
 #'
-#' Return the file path to the CSV with the approximate ANI (average nucleotide identity)
-#' matrix estimated by sourmash for a given pathogensurveillance output folder.
+#' Return the file path to the CSV with the approximate ANI (average nucleotide
+#' identity) matrix estimated by sourmash for a given pathogensurveillance
+#' output folder.
 #'
-#' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
+#' @param format One of `csv`, `npy`, or `npy.labels.txt`. Formats other than
+#'   `csv` are only available when using whole output directories as input.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -190,10 +243,16 @@ pocp_matrix_path <- function(path) {
 #' estimated_ani_matrix_path(path)
 #'
 #' @export
-estimated_ani_matrix_path <- function(path) {
-  output <- find_static_path(path, output_path = 'sourmash_compare', report_path = 'sourmash_ani_matrix.csv')
-  output[endsWith(output, '.csv')]
+estimated_ani_matrix_path <- function(path, format = 'csv') {
+  find_path(
+    path,
+    out_dir_subpath = 'sketch_comparisons/ani_matricies',
+    out_dir_pattern = paste0('\\.', format, '$'),
+    report_dir_subpath = '',
+    report_dir_pattern =  paste0('sourmash_ani_matrix\\.', format, '$')
+  )
 }
+
 
 #' Find the software version file path
 #'
@@ -210,8 +269,15 @@ estimated_ani_matrix_path <- function(path) {
 #'
 #' @export
 software_version_path <- function(path) {
-  find_static_path(path, output_path = NULL, report_path = 'versions.yml')
+  find_path(
+    path,
+    out_dir_subpath = 'report_group_data',
+    out_dir_pattern = '^.+_inputs/versions.yml$',
+    report_dir_subpath = '',
+    report_dir_pattern = '^versions.yml'
+  )
 }
+
 
 #' Find the core gene analysis tree paths
 #'
@@ -228,8 +294,15 @@ software_version_path <- function(path) {
 #'
 #' @export
 core_tree_path <- function(path) {
-  find_static_path(path, output_path = 'iqtree2_core', report_path = 'core_gene_trees')
+  find_path(
+    path,
+    out_dir_subpath = 'trees/core',
+    out_dir_pattern = '\\.treefile$',
+    report_dir_subpath = 'core_gene_trees',
+    report_dir_pattern = '\\.treefile$'
+  )
 }
+
 
 #' Find the considered NCBI reference metadata paths
 #'
@@ -237,13 +310,21 @@ core_tree_path <- function(path) {
 #' the pipeline for download for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param format One of `json` or `tsv`.
 #' @return character vector of length 1
 #' @family path finders
 #'
 #' @export
-considered_ref_meta_path <- function(path) {
-  find_static_path(path, output_path = 'find_assemblies', report_path = 'ncbi_reference_data')
+considered_ref_meta_path <- function(path, format = 'tsv') {
+  find_path(
+    path,
+    out_dir_subpath = 'reference_data/considered',
+    out_dir_pattern = paste0('\\.', format, '$'),
+    report_dir_subpath = 'ncbi_reference_data',
+    report_dir_pattern = paste0('\\.', format, '$')
+  )
 }
+
 
 #' Find the downloaded reference metadata paths
 #'
@@ -256,12 +337,19 @@ considered_ref_meta_path <- function(path) {
 #'
 #' @examples
 #' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
-#' selected_ref_meta_path(path)
+#' downloaded_ref_meta_path(path)
 #'
 #' @export
-selected_ref_meta_path <- function(path) {
-  find_static_path(path, output_path = 'pick_assemblies', report_path = 'selected_references')
+downloaded_ref_meta_path <- function(path) {
+  find_path(
+    path,
+    out_dir_subpath = 'reference_data/downloaded',
+    out_dir_pattern = '\\.tsv$',
+    report_dir_subpath = 'selected_references',
+    report_dir_pattern = '\\.tsv$'
+  )
 }
+
 
 #' Find the sendsketch result paths
 #'
@@ -278,8 +366,15 @@ selected_ref_meta_path <- function(path) {
 #'
 #' @export
 sendsketch_path <- function(path) {
-  find_static_path(path, output_path = 'bbmap_sendsketch', report_path = 'sendsketch')
+  find_path(
+    path,
+    out_dir_subpath = 'sendsketch',
+    out_dir_pattern = '\\.txt$',
+    report_dir_subpath = 'sendsketch',
+    report_dir_pattern = '\\.txt$'
+  )
 }
+
 
 #' Find the SNP alignment paths
 #'
@@ -296,8 +391,15 @@ sendsketch_path <- function(path) {
 #'
 #' @export
 variant_align_path <- function(path) {
-  find_static_path(path, output_path = 'vcf_to_snp_align', report_path = 'snp_alignments')
+  find_path(
+    path,
+    out_dir_subpath = 'variants',
+    out_dir_pattern = '\\.fasta$',
+    report_dir_subpath = 'snp_alignments',
+    report_dir_pattern = '\\.fasta$'
+  )
 }
+
 
 #' Find the SNP tree paths
 #'
@@ -314,72 +416,76 @@ variant_align_path <- function(path) {
 #'
 #' @export
 variant_tree_path <- function(path) {
-  find_static_path(path, output_path = 'iqtree2_snp', report_path = 'snp_trees')
+  find_path(
+    path,
+    out_dir_subpath = 'trees/snp',
+    out_dir_pattern = '\\.treefile$',
+    report_dir_subpath = 'snp_trees',
+    report_dir_pattern = '\\.treefile$'
+  )
+}
+
+
+#' Search for a specific type of file in pathogensurveillance output
+#'
+#' Search for a specific type of file in pathogensurveillance output
+#'
+#' @param path One or more paths to search for pathogensurveillance output,
+#'   either entire output directories or report input directories.
+#' @param out_dir_subpath A path relative to `path` that does not change. Used to lessen
+#'   the number of files that need to be searched through.
+#' @param out_dir_pattern A regex matching the path of the file/directory relative to
+#'   `path`/`out_dir_subpath`.
+#' @param report_dir_subpath A path relative to `path` that does not change. Used to lessen
+#'   the number of files that need to be searched through.
+#' @param report_dir_pattern A regex matching the path of the file/directory relative to
+#'   `path`/`report_dir_subpath`.
+#'
+#' @keywords internal
+find_path <- function(path, out_dir_subpath, out_dir_pattern, report_dir_subpath, report_dir_pattern) {
+  # Remove trailing slash if present
+  path <- sub(path, pattern = '/$', replacement = '')
+  
+  # Find outputs of the pathogensurveillance pipeline
+  output_dir_paths <- find_output_directory_path(path)
+  report_dir_paths <- find_report_input_result_path(path)
+  
+  # Remove any report input paths that are present inside entire output directories
+  report_dir_in_output_dir <- vapply(report_dir_paths, FUN.VALUE = logical(1), function(p) {
+    any(startsWith(p, paste0(output_dir_paths, '/')))
+  })
+  report_dir_paths <- report_dir_paths[! report_dir_in_output_dir]
+  
+  # Find files of interest inside pathogensurveillance output directories
+  output_dir_subpaths <- find_path_in_output_directory(output_dir_paths, subpath = out_dir_subpath, pattern = out_dir_pattern)
+  report_dir_subpaths <- find_path_in_output_directory(report_dir_paths, subpath = report_dir_subpath, pattern = report_dir_pattern)
+  
+  c(output_dir_subpaths, report_dir_subpaths)
 }
 
 
 #' Find files in pathogensurveillance output
 #'
-#' Find files in the output of pathogensurveillance, either in the entire output
-#' folder or the report input folder.
+#' Find files in the output of pathogensurveillance.
 #'
-#' @param path One or more paths to search
-#' @param output_path The path of the file/directory relative to the entire
-#'   pathogensurveillance output.
-#' @param report_path The path of the file/directory relative to the entire
-#'   report input directory.
-#' @param return_contents If `TRUE` (the default), if `path` is a directory, return the files
-#'   in that directory rather than the directory itself.
+#' @param path One or more paths to search.
+#' @param subpath A path relative to `path` that does not change. Used to lessen
+#'   the number of files that need to be searched through.
+#' @param pattern A regex matching the path of the file/directory relative to
+#'   `path`/`subpath`.
 #'
 #' @keywords internal
-find_static_path <- function(path, output_path, report_path, return_contents = TRUE, ...) {
-
-  # Look for directories in both the output folder and report input directories
-  report_dir_paths <- find_report_input_result_path(path)
-  output_dir_paths <- find_output_directory_path(path)
-  
-  # List files in target directories
-  find_one <- function(p, name) {
-    expected_path <- file.path(p, name)
-    if (file.exists(expected_path)) {
-      if (return_contents && dir.exists(expected_path)) {
-        out_paths <- list.files(expected_path, full.names = TRUE, ...)
-        out_paths <- out_paths[file.exists(out_paths)]
-      } else {
-        out_paths <- expected_path
-      }
-    } else {
-      out_paths <- character(0)
-    }
-    return(out_paths)
-  }
-  if (length(output_path) == 0) {
-    output_files <- character(0)
+find_path_in_output_directory <- function(path, subpath, pattern) {
+  if (is.null(subpath) || nchar(subpath) == 0) {
+    search_path <- path
   } else {
-    output_files <- lapply(output_dir_paths, function(x) find_one(x, output_path))
-  } 
-  if (length(report_path) == 0) {
-    report_files <- character(0)
-  } else {
-    report_files <- lapply(report_dir_paths, function(x) find_one(x, report_path))
-    if (length(output_files) > 0) { # Ignore files in report input if also present in entire output
-      is_redundant <- vapply(seq_len(length(report_dir_paths)), FUN.VALUE = logical(1), function(i) {
-        is_nested <- startsWith(report_dir_paths[i], prefix = output_dir_paths)
-        if (all(! is_nested)) {
-          return(FALSE)
-        } 
-        return(length(report_files[[i]]) > 0 & length(output_files[[which(is_nested)]]) > 0)
-      })
-      report_files <- report_files[! is_redundant]
-    }
+    search_path <- file.path(path, subpath)
   }
-  
-  # Return all files found in all directories
-  output <- unlist(c(output_files, report_files))
-  if (is.null(output)) {
-    output <- character(0)
-  }
-  return(output)
+  unlist(lapply(search_path, function(p) {
+    subsubpaths <- list.files(p, recursive = TRUE, include.dirs = TRUE, all.files = TRUE)
+    subsubpaths <- subsubpaths[grepl(subsubpaths, pattern = pattern)]
+    file.path(p, subsubpaths)
+  }))
 }
 
 

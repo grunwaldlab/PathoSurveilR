@@ -4,14 +4,10 @@
 \alias{ref_meta_path}
 \title{Find reference metadata file path}
 \usage{
-ref_meta_path(path, from_report_input = TRUE)
+ref_meta_path(path)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance output.}
-
-\item{from_report_input}{If \code{TRUE} (the default), return the version of the
-metadata passed to the report rather than the first parsed version of the
-user metadata used for all report groups.}
 }
 \value{
 character vector of length 1
@@ -32,11 +28,11 @@ Other path finders:
 \code{\link{considered_ref_meta_path}()},
 \code{\link{core_ref_path}()},
 \code{\link{core_tree_path}()},
+\code{\link{downloaded_ref_meta_path}()},
 \code{\link{estimated_ani_matrix_path}()},
 \code{\link{pocp_matrix_path}()},
 \code{\link{run_info_path}()},
 \code{\link{sample_meta_path}()},
-\code{\link{selected_ref_meta_path}()},
 \code{\link{sendsketch_path}()},
 \code{\link{software_version_path}()},
 \code{\link{status_message_path}()},

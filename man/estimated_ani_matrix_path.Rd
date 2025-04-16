@@ -4,17 +4,22 @@
 \alias{estimated_ani_matrix_path}
 \title{Find the estimated ANI matrix file path}
 \usage{
-estimated_ani_matrix_path(path)
+estimated_ani_matrix_path(path, format = "csv")
 }
 \arguments{
-\item{path}{The path to one or more folders that contain pathogensurveillance output.}
+\item{path}{The path to one or more folders that contain pathogensurveillance
+output.}
+
+\item{format}{One of \code{csv}, \code{npy}, or \code{npy.labels.txt}. Formats other than
+\code{csv} are only available when using whole output directories as input.}
 }
 \value{
 character vector of length 1
 }
 \description{
-Return the file path to the CSV with the approximate ANI (average nucleotide identity)
-matrix estimated by sourmash for a given pathogensurveillance output folder.
+Return the file path to the CSV with the approximate ANI (average nucleotide
+identity) matrix estimated by sourmash for a given pathogensurveillance
+output folder.
 }
 \examples{
 path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
@@ -28,11 +33,11 @@ Other path finders:
 \code{\link{considered_ref_meta_path}()},
 \code{\link{core_ref_path}()},
 \code{\link{core_tree_path}()},
+\code{\link{downloaded_ref_meta_path}()},
 \code{\link{pocp_matrix_path}()},
 \code{\link{ref_meta_path}()},
 \code{\link{run_info_path}()},
 \code{\link{sample_meta_path}()},
-\code{\link{selected_ref_meta_path}()},
 \code{\link{sendsketch_path}()},
 \code{\link{software_version_path}()},
 \code{\link{status_message_path}()},
