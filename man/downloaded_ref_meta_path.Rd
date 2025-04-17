@@ -4,10 +4,13 @@
 \alias{downloaded_ref_meta_path}
 \title{Find the downloaded reference metadata paths}
 \usage{
-downloaded_ref_meta_path(path)
+downloaded_ref_meta_path(path, simplify = FALSE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance output.}
+
+\item{simplify}{If \code{TRUE}, return a single vector with all paths rather than
+a list of vectors for each output directory.}
 }
 \value{
 character vector of length 1

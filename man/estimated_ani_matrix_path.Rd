@@ -4,11 +4,14 @@
 \alias{estimated_ani_matrix_path}
 \title{Find the estimated ANI matrix file path}
 \usage{
-estimated_ani_matrix_path(path, format = "csv")
+estimated_ani_matrix_path(path, simplify = FALSE, format = "csv")
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance
 output.}
+
+\item{simplify}{If \code{TRUE}, return a single vector with all paths rather than
+a list of vectors for each output directory.}
 
 \item{format}{One of \code{csv}, \code{npy}, or \code{npy.labels.txt}. Formats other than
 \code{csv} are only available when using whole output directories as input.}

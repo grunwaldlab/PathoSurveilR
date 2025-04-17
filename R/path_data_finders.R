@@ -245,9 +245,8 @@ core_tree_path_data <- function(path) {
 considered_ref_meta_path_data <- function(path) {
   output <- make_path_data_with_group(path, considered_ref_meta_path)
   output$family <- unlist(lapply(basename(output$path), function(file_name) {
-    sub(file_name, pattern = '\\.json$', replacement = '')
+    sub(file_name, pattern = '\\.tsv$', replacement = '')
   }))
-  output <- output[c('report_group_id', 'family', 'path')]
   return(output)
 }
 
@@ -280,10 +279,8 @@ selected_ref_meta_path_data <- function(path) {
 #' Return a table with the file paths of the sendsketch results for each sample
 #' for a given pathogensurveillance output folder.
 #'
-#' @param path The path to one or more folders that contain pathogensurveillance
-#'   output.
-#' @param sample_id One or more sample IDs to return data for. By default, data
-#'   for all samples is returned.
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
 #' @return `tibble` with `report_group_id` and `path` columns
 #' @family path tables
 #'
@@ -292,18 +289,11 @@ selected_ref_meta_path_data <- function(path) {
 #' sendsketch_path_data(path)
 #'
 #' @export
-sendsketch_path_data <- function(path, sample_id = NULL) {
+sendsketch_path_data <- function(path) {
   output <- make_path_data_with_group(path, sendsketch_path)
   output$sample_id <- unlist(lapply(basename(output$path), function(file_name) {
     sub(file_name, pattern = '\\.txt$', replacement = '')
   }))
-  output <- output[c('sample_id', 'report_group_id', 'path')]
-  
-  # Filter by sample ID
-  if (! is.null(sample_id)) {
-    output <- path_data[output$sample_id %in% sample_id, , drop = FALSE]
-  }
-  
   return(output)
 }
 
@@ -348,6 +338,12 @@ variant_align_path_data <- function(path) {
 #'
 #' @export
 variant_tree_path_data <- function(path) {
+  tree_paths <- variant_tree_path(path, simplify = FALSE)
+  metadata_paths <- sample_meta_path(path, simplify = FALSE)
+  
+  
+  
+  
   output <- make_path_data_with_group(path, variant_tree_path)
   file_names <- basename(output$path)
   output$ref_id <- unlist(lapply(1:nrow(output), function(index) {

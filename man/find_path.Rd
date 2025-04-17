@@ -9,24 +9,28 @@ find_path(
   out_dir_subpath,
   out_dir_pattern,
   report_dir_subpath,
-  report_dir_pattern
+  report_dir_pattern,
+  simplify = TRUE
 )
 }
 \arguments{
 \item{path}{One or more paths to search for pathogensurveillance output,
 either entire output directories or report input directories.}
 
-\item{out_dir_subpath}{A path relative to \code{path} that does not change. Used to lessen
-the number of files that need to be searched through.}
+\item{out_dir_subpath}{A path relative to \code{path} that does not change. Used
+to lessen the number of files that need to be searched through.}
 
-\item{out_dir_pattern}{A regex matching the path of the file/directory relative to
-\code{path}/\code{out_dir_subpath}.}
+\item{out_dir_pattern}{A regex matching the path of the file/directory
+relative to \code{path}/\code{out_dir_subpath}.}
 
-\item{report_dir_subpath}{A path relative to \code{path} that does not change. Used to lessen
-the number of files that need to be searched through.}
+\item{report_dir_subpath}{A path relative to \code{path} that does not change.
+Used to lessen the number of files that need to be searched through.}
 
-\item{report_dir_pattern}{A regex matching the path of the file/directory relative to
-\code{path}/\code{report_dir_subpath}.}
+\item{report_dir_pattern}{A regex matching the path of the file/directory
+relative to \code{path}/\code{report_dir_subpath}.}
+
+\item{simplify}{If \code{TRUE}, return a single vector with all paths rather than
+a list of vectors for each output directory.}
 }
 \description{
 Search for a specific type of file in pathogensurveillance output

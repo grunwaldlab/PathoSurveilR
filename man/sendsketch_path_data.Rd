@@ -4,14 +4,11 @@
 \alias{sendsketch_path_data}
 \title{Find the sendsketch result path data}
 \usage{
-sendsketch_path_data(path, sample_id = NULL)
+sendsketch_path_data(path)
 }
 \arguments{
-\item{path}{The path to one or more folders that contain pathogensurveillance
-output.}
-
-\item{sample_id}{One or more sample IDs to return data for. By default, data
-for all samples is returned.}
+\item{path}{The path to one or more folders that contain
+pathogensurveillance output.}
 }
 \value{
 \code{tibble} with \code{report_group_id} and \code{path} columns

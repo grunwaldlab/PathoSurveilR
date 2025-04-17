@@ -4,10 +4,13 @@
 \alias{busco_ref_path}
 \title{Find the BUSCO analysis reference data file path}
 \usage{
-busco_ref_path(path)
+busco_ref_path(path, simplify = FALSE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance output.}
+
+\item{simplify}{If \code{TRUE}, return a single vector with all paths rather than
+a list of vectors for each output directory.}
 }
 \value{
 character vector of length 1

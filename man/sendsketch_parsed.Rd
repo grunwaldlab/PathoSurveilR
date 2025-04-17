@@ -10,9 +10,6 @@ sendsketch_parsed(path, sample_id = NULL, only_best = FALSE)
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
 
-\item{sample_id}{One or more sample IDs to return data for. By default, data
-for all samples is returned.}
-
 \item{only_best}{Only return the best hit for each combination of report
 group and sample.}
 }

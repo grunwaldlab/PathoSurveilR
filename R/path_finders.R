@@ -5,6 +5,8 @@
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -13,13 +15,14 @@
 #' sample_meta_path(path)
 #'
 #' @export
-sample_meta_path <- function(path) {
+sample_meta_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'metadata',
     out_dir_pattern = '^sample_metadata\\.tsv$',
     report_dir_subpath = '',
-    report_dir_pattern =  '^sample_data\\.tsv$'
+    report_dir_pattern =  '^sample_data\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -30,6 +33,8 @@ sample_meta_path <- function(path) {
 #' pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -38,13 +43,14 @@ sample_meta_path <- function(path) {
 #' ref_meta_path(path)
 #'
 #' @export
-ref_meta_path <- function(path) {
+ref_meta_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'metadata',
     out_dir_pattern = '^reference_metadata\\.tsv$',
     report_dir_subpath = '',
-    report_dir_pattern =  '^reference_data\\.tsv$'
+    report_dir_pattern =  '^reference_data\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -56,6 +62,8 @@ ref_meta_path <- function(path) {
 #' folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -64,13 +72,14 @@ ref_meta_path <- function(path) {
 #' busco_tree_path(path)
 #'
 #' @export
-busco_tree_path <- function(path) {
+busco_tree_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'trees/busco',
     out_dir_pattern = '\\.treefile$',
     report_dir_subpath = 'busco_trees',
-    report_dir_pattern = '\\.treefile$'
+    report_dir_pattern = '\\.treefile$',
+    simplify = simplify
   )
 }
 
@@ -81,6 +90,8 @@ busco_tree_path <- function(path) {
 #' analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -89,13 +100,14 @@ busco_tree_path <- function(path) {
 #' busco_ref_path(path)
 #'
 #' @export
-busco_ref_path <- function(path) {
+busco_ref_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'reference_data/selected',
     out_dir_pattern = '_busco_references\\.tsv$',
     report_dir_subpath = '',
-    report_dir_pattern = '^busco_tree_references\\.tsv$'
+    report_dir_pattern = '^busco_tree_references\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -106,6 +118,8 @@ busco_ref_path <- function(path) {
 #' gene analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -114,13 +128,14 @@ busco_ref_path <- function(path) {
 #' core_ref_path(path)
 #'
 #' @export
-core_ref_path <- function(path) {
+core_ref_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'reference_data/selected',
     out_dir_pattern = '_core_references\\.tsv$',
     report_dir_subpath = '',
-    report_dir_pattern = '^core_gene_tree_references\\.tsv$'
+    report_dir_pattern = '^core_gene_tree_references\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -131,6 +146,8 @@ core_ref_path <- function(path) {
 #' pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -139,13 +156,14 @@ core_ref_path <- function(path) {
 #' run_info_path(path)
 #'
 #' @export
-run_info_path <- function(path) {
+run_info_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'pipeline_info',
     out_dir_pattern = '^pathogensurveillance_run_info\\.yml$',
     report_dir_subpath = '',
-    report_dir_pattern = '^pathogensurveillance_run_info\\.yml$'
+    report_dir_pattern = '^pathogensurveillance_run_info\\.yml$',
+    simplify = simplify
   )
 }
 
@@ -156,6 +174,8 @@ run_info_path <- function(path) {
 #' variant analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -164,13 +184,14 @@ run_info_path <- function(path) {
 #' variant_ref_path(path)
 #'
 #' @export
-variant_ref_path <- function(path) {
+variant_ref_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'reference_data/selected',
     out_dir_pattern = '_mapping_references\\.tsv$',
     report_dir_subpath = '',
-    report_dir_pattern = '^mapping_references\\.tsv$'
+    report_dir_pattern = '^mapping_references\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -181,6 +202,8 @@ variant_ref_path <- function(path) {
 #' for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -189,13 +212,14 @@ variant_ref_path <- function(path) {
 #' status_message_path(path)
 #'
 #' @export
-status_message_path <- function(path) {
+status_message_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'pipeline_info',
     out_dir_pattern = '^messages\\.tsv$',
     report_dir_subpath = '',
-    report_dir_pattern = '^messages\\.tsv$'
+    report_dir_pattern = '^messages\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -206,6 +230,8 @@ status_message_path <- function(path) {
 #' matrix for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -214,13 +240,14 @@ status_message_path <- function(path) {
 #' pocp_matrix_path(path)
 #'
 #' @export
-pocp_matrix_path <- function(path) {
+pocp_matrix_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'pocp',
     out_dir_pattern = '_pocp\\.tsv$',
     report_dir_subpath = '',
-    report_dir_pattern = '^pocp\\.tsv$'
+    report_dir_pattern = '^pocp\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -233,6 +260,8 @@ pocp_matrix_path <- function(path) {
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @param format One of `csv`, `npy`, or `npy.labels.txt`. Formats other than
 #'   `csv` are only available when using whole output directories as input.
 #' @return character vector of length 1
@@ -243,13 +272,14 @@ pocp_matrix_path <- function(path) {
 #' estimated_ani_matrix_path(path)
 #'
 #' @export
-estimated_ani_matrix_path <- function(path, format = 'csv') {
+estimated_ani_matrix_path <- function(path, simplify = FALSE, format = 'csv') {
   find_path(
     path,
     out_dir_subpath = 'sketch_comparisons/ani_matricies',
     out_dir_pattern = paste0('\\.', format, '$'),
     report_dir_subpath = '',
-    report_dir_pattern =  paste0('sourmash_ani_matrix\\.', format, '$')
+    report_dir_pattern =  paste0('sourmash_ani_matrix\\.', format, '$'),
+    simplify = simplify
   )
 }
 
@@ -260,6 +290,8 @@ estimated_ani_matrix_path <- function(path, format = 'csv') {
 #' a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -268,13 +300,14 @@ estimated_ani_matrix_path <- function(path, format = 'csv') {
 #' software_version_path(path)
 #'
 #' @export
-software_version_path <- function(path) {
+software_version_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'report_group_data',
     out_dir_pattern = '^.+_inputs/versions.yml$',
     report_dir_subpath = '',
-    report_dir_pattern = '^versions.yml'
+    report_dir_pattern = '^versions.yml',
+    simplify = simplify
   )
 }
 
@@ -285,6 +318,8 @@ software_version_path <- function(path) {
 #' gene analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -293,13 +328,14 @@ software_version_path <- function(path) {
 #' core_tree_path(path)
 #'
 #' @export
-core_tree_path <- function(path) {
+core_tree_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'trees/core',
     out_dir_pattern = '\\.treefile$',
     report_dir_subpath = 'core_gene_trees',
-    report_dir_pattern = '\\.treefile$'
+    report_dir_pattern = '\\.treefile$',
+    simplify = simplify
   )
 }
 
@@ -310,6 +346,8 @@ core_tree_path <- function(path) {
 #' the pipeline for download for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @param format One of `json` or `tsv`.
 #' @return character vector of length 1
 #' @family path finders
@@ -321,7 +359,8 @@ considered_ref_meta_path <- function(path, format = 'tsv') {
     out_dir_subpath = 'reference_data/considered',
     out_dir_pattern = paste0('\\.', format, '$'),
     report_dir_subpath = 'ncbi_reference_data',
-    report_dir_pattern = paste0('\\.', format, '$')
+    report_dir_pattern = paste0('\\.', format, '$'),
+    simplify = simplify
   )
 }
 
@@ -332,6 +371,8 @@ considered_ref_meta_path <- function(path, format = 'tsv') {
 #' downloaded for each sample for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -340,13 +381,14 @@ considered_ref_meta_path <- function(path, format = 'tsv') {
 #' downloaded_ref_meta_path(path)
 #'
 #' @export
-downloaded_ref_meta_path <- function(path) {
+downloaded_ref_meta_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'reference_data/downloaded',
     out_dir_pattern = '\\.tsv$',
     report_dir_subpath = 'selected_references',
-    report_dir_pattern = '\\.tsv$'
+    report_dir_pattern = '\\.tsv$',
+    simplify = simplify
   )
 }
 
@@ -357,6 +399,8 @@ downloaded_ref_meta_path <- function(path) {
 #' pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -365,13 +409,14 @@ downloaded_ref_meta_path <- function(path) {
 #' sendsketch_path(path)
 #'
 #' @export
-sendsketch_path <- function(path) {
+sendsketch_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'sendsketch',
     out_dir_pattern = '\\.txt$',
     report_dir_subpath = 'sendsketch',
-    report_dir_pattern = '\\.txt$'
+    report_dir_pattern = '\\.txt$',
+    simplify = simplify
   )
 }
 
@@ -382,6 +427,8 @@ sendsketch_path <- function(path) {
 #' variant analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -390,13 +437,14 @@ sendsketch_path <- function(path) {
 #' variant_align_path(path)
 #'
 #' @export
-variant_align_path <- function(path) {
+variant_align_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'variants',
     out_dir_pattern = '\\.fasta$',
     report_dir_subpath = 'snp_alignments',
-    report_dir_pattern = '\\.fasta$'
+    report_dir_pattern = '\\.fasta$',
+    simplify = simplify
   )
 }
 
@@ -407,6 +455,8 @@ variant_align_path <- function(path) {
 #' variant analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #' @return character vector of length 1
 #' @family path finders
 #'
@@ -415,13 +465,14 @@ variant_align_path <- function(path) {
 #' variant_tree_path(path)
 #'
 #' @export
-variant_tree_path <- function(path) {
+variant_tree_path <- function(path, simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'trees/snp',
     out_dir_pattern = '\\.treefile$',
     report_dir_subpath = 'snp_trees',
-    report_dir_pattern = '\\.treefile$'
+    report_dir_pattern = '\\.treefile$',
+    simplify = simplify
   )
 }
 
@@ -432,17 +483,19 @@ variant_tree_path <- function(path) {
 #'
 #' @param path One or more paths to search for pathogensurveillance output,
 #'   either entire output directories or report input directories.
-#' @param out_dir_subpath A path relative to `path` that does not change. Used to lessen
-#'   the number of files that need to be searched through.
-#' @param out_dir_pattern A regex matching the path of the file/directory relative to
-#'   `path`/`out_dir_subpath`.
-#' @param report_dir_subpath A path relative to `path` that does not change. Used to lessen
-#'   the number of files that need to be searched through.
-#' @param report_dir_pattern A regex matching the path of the file/directory relative to
-#'   `path`/`report_dir_subpath`.
+#' @param out_dir_subpath A path relative to `path` that does not change. Used
+#'   to lessen the number of files that need to be searched through.
+#' @param out_dir_pattern A regex matching the path of the file/directory
+#'   relative to `path`/`out_dir_subpath`.
+#' @param report_dir_subpath A path relative to `path` that does not change.
+#'   Used to lessen the number of files that need to be searched through.
+#' @param report_dir_pattern A regex matching the path of the file/directory
+#'   relative to `path`/`report_dir_subpath`.
+#' @param simplify If `TRUE`, return a single vector with all paths rather than
+#'   a list of vectors for each output directory.
 #'
 #' @keywords internal
-find_path <- function(path, out_dir_subpath, out_dir_pattern, report_dir_subpath, report_dir_pattern) {
+find_path <- function(path, out_dir_subpath, out_dir_pattern, report_dir_subpath, report_dir_pattern, simplify = TRUE) {
   # Remove trailing slash if present
   path <- sub(path, pattern = '/$', replacement = '')
   
@@ -457,10 +510,18 @@ find_path <- function(path, out_dir_subpath, out_dir_pattern, report_dir_subpath
   report_dir_paths <- report_dir_paths[! report_dir_in_output_dir]
   
   # Find files of interest inside pathogensurveillance output directories
-  output_dir_subpaths <- find_path_in_output_directory(output_dir_paths, subpath = out_dir_subpath, pattern = out_dir_pattern)
-  report_dir_subpaths <- find_path_in_output_directory(report_dir_paths, subpath = report_dir_subpath, pattern = report_dir_pattern)
+  output_dir_subpaths <- lapply(output_dir_paths, find_path_in_output_directory, subpath = out_dir_subpath, pattern = out_dir_pattern)
+  report_dir_subpaths <- lapply(report_dir_paths, find_path_in_output_directory, subpath = report_dir_subpath, pattern = report_dir_pattern)
+  output <- c(output_dir_subpaths, report_dir_subpaths)
   
-  c(output_dir_subpaths, report_dir_subpaths)
+  # Collapse results to a single vector if specified
+  if (simplify) {
+    output <- unlist(output)
+  } else {
+    names(output) <- c(output_dir_paths, report_dir_paths)
+  }
+  
+  return(output)
 }
 
 

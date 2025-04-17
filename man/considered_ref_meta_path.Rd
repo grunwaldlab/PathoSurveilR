@@ -10,6 +10,9 @@ considered_ref_meta_path(path, format = "tsv")
 \item{path}{The path to one or more folders that contain pathogensurveillance output.}
 
 \item{format}{One of \code{json} or \code{tsv}.}
+
+\item{simplify}{If \code{TRUE}, return a single vector with all paths rather than
+a list of vectors for each output directory.}
 }
 \value{
 character vector of length 1

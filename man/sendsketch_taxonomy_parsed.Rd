@@ -15,9 +15,6 @@ sendsketch_taxonomy_parsed(
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
 
-\item{sample_id}{One or more sample IDs to return data for. By default, data
-for all samples is returned.}
-
 \item{remove_ranks}{If \code{TRUE}, remove the rank information from the taxonomy.}
 
 \item{only_best}{Only return the best hit for each combination of report

@@ -87,7 +87,9 @@ status_message_parsed_summary <- function(path) {
 #'
 #' @export
 sample_meta_parsed <- function(path) {
-  output <- do.call(rbind, lapply(sample_meta_path(path), utils::read.csv, check.names = FALSE, sep = '\t'))
+  meta_paths <- sample_meta_path(path, simplify = FALSE)
+  
+  output <- lapply(meta_paths, utils::read.csv, check.names = FALSE, sep = '\t')
   output[] <- lapply(output, function(col_data) ifelse(col_data == 'null', NA_character_, col_data))
   output <- tibble::as_tibble(output)
   output <- unique(output)
