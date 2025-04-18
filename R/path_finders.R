@@ -16,14 +16,29 @@
 #'
 #' @export
 sample_meta_path <- function(path, simplify = FALSE) {
-  find_path(
+  user_version <- find_path(
     path,
     out_dir_subpath = 'metadata',
     out_dir_pattern = '^sample_metadata\\.tsv$',
+    report_dir_subpath = NULL,
+    report_dir_pattern =  NULL,
+    simplify = FALSE
+  )
+  report_version <- find_path(
+    path,
+    out_dir_subpath = 'report_group_data',
+    out_dir_pattern = '^.+_inputs/sample_data\\.tsv$',
     report_dir_subpath = '',
     report_dir_pattern =  '^sample_data\\.tsv$',
-    simplify = simplify
+    simplify = FALSE
   )
+  output <- c(report_version, user_version[! names(user_version) %in% names(report_version)])
+  
+  if (simplify) {
+    output <- unname(unlist(output))
+  }
+  
+  return(output)
 }
 
 
@@ -32,7 +47,8 @@ sample_meta_path <- function(path, simplify = FALSE) {
 #' Return the file path to the TSV containing the reference metadata for a given
 #' pathogensurveillance output folder.
 #'
-#' @param path The path to one or more folders that contain pathogensurveillance output.
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
 #' @param simplify If `TRUE`, return a single vector with all paths rather than
 #'   a list of vectors for each output directory.
 #' @return character vector of length 1
@@ -44,14 +60,29 @@ sample_meta_path <- function(path, simplify = FALSE) {
 #'
 #' @export
 ref_meta_path <- function(path, simplify = FALSE) {
-  find_path(
+  user_version <- find_path(
     path,
     out_dir_subpath = 'metadata',
     out_dir_pattern = '^reference_metadata\\.tsv$',
+    report_dir_subpath = NULL,
+    report_dir_pattern =  NULL,
+    simplify = simplify
+  )
+  report_version <- find_path(
+    path,
+    out_dir_subpath = 'report_group_data',
+    out_dir_pattern = '^.+_inputs/reference_data\\.tsv$',
     report_dir_subpath = '',
     report_dir_pattern =  '^reference_data\\.tsv$',
     simplify = simplify
   )
+  output <- c(report_version, user_version[! names(user_version) %in% names(report_version)])
+  
+  if (simplify) {
+    output <- unname(unlist(output))
+  }
+  
+  return(output)
 }
 
 
@@ -353,7 +384,7 @@ core_tree_path <- function(path, simplify = FALSE) {
 #' @family path finders
 #'
 #' @export
-considered_ref_meta_path <- function(path, format = 'tsv') {
+considered_ref_meta_path <- function(path, format = 'tsv', simplify = FALSE) {
   find_path(
     path,
     out_dir_subpath = 'reference_data/considered',
@@ -510,15 +541,24 @@ find_path <- function(path, out_dir_subpath, out_dir_pattern, report_dir_subpath
   report_dir_paths <- report_dir_paths[! report_dir_in_output_dir]
   
   # Find files of interest inside pathogensurveillance output directories
-  output_dir_subpaths <- lapply(output_dir_paths, find_path_in_output_directory, subpath = out_dir_subpath, pattern = out_dir_pattern)
-  report_dir_subpaths <- lapply(report_dir_paths, find_path_in_output_directory, subpath = report_dir_subpath, pattern = report_dir_pattern)
-  output <- c(output_dir_subpaths, report_dir_subpaths)
+  output <- list()
+  output_names <- character(0)
+  if (! (is.null(out_dir_subpath) && is.null(out_dir_pattern)) ) {
+    output <- c(output, lapply(output_dir_paths, find_path_in_output_directory,
+                               subpath = out_dir_subpath, pattern = out_dir_pattern))
+    output_names <- c(output_names, output_dir_paths)
+  }
+  if (! (is.null(report_dir_subpath) && is.null(report_dir_pattern)) ) {
+    output <- c(output, lapply(report_dir_paths, find_path_in_output_directory,
+                               subpath = report_dir_subpath, pattern = report_dir_pattern))
+    output_names <- c(output_names, report_dir_paths)
+  }
   
   # Collapse results to a single vector if specified
   if (simplify) {
     output <- unlist(output)
   } else {
-    names(output) <- c(output_dir_paths, report_dir_paths)
+    names(output) <- output_names
   }
   
   return(output)

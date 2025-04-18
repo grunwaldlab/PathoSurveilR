@@ -304,3 +304,49 @@ sendsketch_best_hits <- function(sketch_data, sort_columns = c("WKID", "ANI", "C
   rownames(final_table) <- NULL
   return(final_table)
 }
+
+
+
+#' Combines multiple data frames
+#' 
+#' combines multiple data frames, handling cases where they have different columns by filling missing values with NA
+#'  
+#' @param ... One or more data.frames to combine
+#'
+#' @keywords internal
+combine_data_frames <- function(...) {
+  # Get all input data frames as a list
+  dfs <- list(...)
+  
+  # Check if all inputs are data frames
+  if (!all(sapply(dfs, is.data.frame))) {
+    stop("All arguments must be data.frames")
+  }
+  
+  # Get all unique column names across all data frames
+  all_cols <- unique(unlist(lapply(dfs, names)))
+  
+  # Function to align columns of a single data frame
+  align_df <- function(df) {
+    # Find missing columns in this df
+    missing_cols <- setdiff(all_cols, names(df))
+    
+    # Add missing columns filled with NA
+    if (length(missing_cols) > 0) {
+      for (col in missing_cols) {
+        df[[col]] <- NA
+      }
+    }
+    
+    # Reorder columns to match all_cols order
+    df[, all_cols, drop = FALSE]
+  }
+  
+  # Apply alignment to all data frames and combine them
+  combined <- do.call(rbind, lapply(dfs, align_df))
+  
+  # Reset row names
+  rownames(combined) <- NULL
+  
+  return(combined)
+}

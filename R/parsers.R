@@ -78,6 +78,8 @@ status_message_parsed_summary <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single table with data from all files rather than
+#'   a list of tables for each output directory.
 #'
 #' @return A [tibble::tibble()] with the sample metadata
 #'
@@ -86,13 +88,18 @@ status_message_parsed_summary <- function(path) {
 #' sample_meta_parsed(path)
 #'
 #' @export
-sample_meta_parsed <- function(path) {
+sample_meta_parsed <- function(path, simplify = TRUE) {
   meta_paths <- sample_meta_path(path, simplify = FALSE)
+  output <- lapply(meta_paths, function(p) {
+    x <- do.call(combine_data_frames, lapply(p, utils::read.csv, check.names = FALSE, sep = '\t'))
+    x[] <- lapply(x, function(col_data) ifelse(col_data == 'null', NA_character_, col_data))
+    tibble::as_tibble(x)
+  })
   
-  output <- lapply(meta_paths, utils::read.csv, check.names = FALSE, sep = '\t')
-  output[] <- lapply(output, function(col_data) ifelse(col_data == 'null', NA_character_, col_data))
-  output <- tibble::as_tibble(output)
-  output <- unique(output)
+  if (simplify) {
+    output <- do.call(combine_data_frames, output)
+  }
+  
   return(output)
 }
 
@@ -105,6 +112,8 @@ sample_meta_parsed <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
+#' @param simplify If `TRUE`, return a single table with data from all files rather than
+#'   a list of tables for each output directory.
 #'
 #' @return A [tibble::tibble()] with reference metadata
 #'
@@ -113,11 +122,18 @@ sample_meta_parsed <- function(path) {
 #' ref_meta_parsed(path)
 #'
 #' @export
-ref_meta_parsed <- function(path) {
-  output <- do.call(rbind, lapply(ref_meta_path(path), utils::read.csv, check.names = FALSE, sep = '\t'))
-  output[] <- lapply(output, function(col_data) ifelse(col_data == 'null', NA_character_, col_data))
-  output <- tibble::as_tibble(output)
-  output <- unique(output)
+ref_meta_parsed <- function(path, simplify = TRUE) {
+  meta_paths <- ref_meta_path(path, simplify = FALSE)
+  output <- lapply(meta_paths, function(p) {
+    x <- do.call(combine_data_frames, lapply(p, utils::read.csv, check.names = FALSE, sep = '\t'))
+    x[] <- lapply(x, function(col_data) ifelse(col_data == 'null', NA_character_, col_data))
+    tibble::as_tibble(x)
+  })
+  
+  if (simplify) {
+    output <- do.call(combine_data_frames, output)
+  }
+  
   return(output)
 }
 

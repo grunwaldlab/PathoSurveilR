@@ -1,10 +1,13 @@
 #' Find sample metadata path data
 #'
-#' Return the file path data to the TSV containing the sample metadata for a given
-#' pathogensurveillance output folder.
+#' Return the file path data to the TSV containing the sample metadata for a
+#' given pathogensurveillance output folder.
 #'
-#' @param path The path to one or more folders that contain pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -12,9 +15,17 @@
 #' sample_meta_path_data(path)
 #'
 #' @export
-sample_meta_path_data <- function(path) {
-  make_path_data_with_group(path, sample_meta_path)
+sample_meta_path_data <- function(path, simplify = TRUE) {
+  samp_meta_paths <- sample_meta_path(path)
+  output <- lapply(samp_meta_paths, function(p) {
+    tibble::tibble(
+      report_id = sub(p, pattern = '^.*/(.+)_inputs/sample_data\\.tsv$', replacement = '\\1'),
+      path = p
+    )
+  })
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find reference metadata path data
 #'
@@ -22,7 +33,9 @@ sample_meta_path_data <- function(path) {
 #' pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -30,9 +43,17 @@ sample_meta_path_data <- function(path) {
 #' ref_meta_path_data(path)
 #'
 #' @export
-ref_meta_path_data <- function(path) {
-  make_path_data_with_group(path, ref_meta_path)
+ref_meta_path_data <- function(path, simplify = TRUE) {
+  ref_meta_paths <- ref_meta_path(path)
+  output <- lapply(ref_meta_paths, function(p) {
+    tibble::tibble(
+      report_id = sub(p, pattern = '^.*/(.+)_inputs/reference_data\\.tsv$', replacement = '\\1'),
+      path = p
+    )
+  })
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the BUSCO tree path data
 #'
@@ -42,7 +63,9 @@ ref_meta_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -50,9 +73,22 @@ ref_meta_path_data <- function(path) {
 #' busco_tree_path_data(path)
 #'
 #' @export
-busco_tree_path_data <- function(path) {
-  make_path_data_with_group(path, busco_tree_path)
+busco_tree_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = busco_tree_path,
+    regex = "^(.+?)_cluster_[0-9]+\\.treefile$",
+    id_types = c("report_id")
+  )
+  output <- lapply(output, function(x) {
+    x$cluster_id <- vapply(seq_len(nrow(x)), FUN.VALUE = character(1), function(i) {
+      sub(basename(x$path[i]), pattern = paste0('^', x$report_id[i], '_(cluster_[0-9]+)\\.treefile'), replacement = '\\1')
+    })
+    x[, c('report_id', 'cluster_id', 'path')]
+  })
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the BUSCO analysis reference path data
 #'
@@ -61,7 +97,9 @@ busco_tree_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -69,9 +107,16 @@ busco_tree_path_data <- function(path) {
 #' busco_ref_path_data(path)
 #'
 #' @export
-busco_ref_path_data <- function(path) {
-  make_path_data_with_group(path, busco_ref_path)
+busco_ref_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = busco_ref_path,
+    regex = "^(.+?)_busco_references\\.tsv$",
+    id_types = c("report_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the core gene analysis reference path data
 #'
@@ -80,7 +125,9 @@ busco_ref_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -88,9 +135,16 @@ busco_ref_path_data <- function(path) {
 #' core_ref_path_data(path)
 #'
 #' @export
-core_ref_path_data <- function(path) {
-  make_path_data_with_group(path, core_ref_path)
+core_ref_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = core_ref_path,
+    regex = "^(.+?)_core_references\\.tsv$",
+    id_types = c("report_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the run info file path data
 #'
@@ -99,7 +153,9 @@ core_ref_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -107,9 +163,16 @@ core_ref_path_data <- function(path) {
 #' run_info_path_data(path)
 #'
 #' @export
-run_info_path_data <- function(path) {
-  make_path_data_with_group(path, run_info_path)
+run_info_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = run_info_path,
+    regex = NULL,
+    id_types = c("report_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the variant analysis reference path data
 #'
@@ -118,7 +181,9 @@ run_info_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -126,9 +191,16 @@ run_info_path_data <- function(path) {
 #' variant_ref_path_data(path)
 #'
 #' @export
-variant_ref_path_data <- function(path) {
-  make_path_data_with_group(path, variant_ref_path)
+variant_ref_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = variant_ref_path,
+    regex = "^(.+?)_mapping_references\\.tsv$",
+    id_types = c("report_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the status message TSV path data
 #'
@@ -137,7 +209,9 @@ variant_ref_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -145,9 +219,16 @@ variant_ref_path_data <- function(path) {
 #' status_message_path_data(path)
 #'
 #' @export
-status_message_path_data <- function(path) {
-  make_path_data_with_group(path, status_message_path)
+status_message_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = status_message_path,
+    regex = "^(.+?)\\.tsv$",
+    id_types = c("report_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the POCP matrix path data
 #'
@@ -156,7 +237,9 @@ status_message_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -164,9 +247,16 @@ status_message_path_data <- function(path) {
 #' pocp_matrix_path_data(path)
 #'
 #' @export
-pocp_matrix_path_data <- function(path) {
-  make_path_data_with_group(path, pocp_matrix_path)
+pocp_matrix_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = pocp_matrix_path,
+    regex = "^(.+?)_pocp\\.tsv$",
+    id_types = c("report_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the estimated ANI matrix path data
 #'
@@ -176,7 +266,9 @@ pocp_matrix_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -184,9 +276,16 @@ pocp_matrix_path_data <- function(path) {
 #' estimated_ani_matrix_path_data(path)
 #'
 #' @export
-estimated_ani_matrix_path_data <- function(path) {
-  make_path_data_with_group(path, estimated_ani_matrix_path)
+estimated_ani_matrix_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = estimated_ani_matrix_path,
+    regex = "^(.+?)_comp\\.csv$",
+    id_types = c("report_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the software version path data
 #'
@@ -195,7 +294,9 @@ estimated_ani_matrix_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -203,9 +304,17 @@ estimated_ani_matrix_path_data <- function(path) {
 #' software_version_path_data(path)
 #'
 #' @export
-software_version_path_data <- function(path) {
-  make_path_data_with_group(path, software_version_path)
+software_version_path_data <- function(path, simplify = TRUE) {
+  version_meta_paths <- software_version_path(path)
+  output <- lapply(version_meta_paths, function(p) {
+    tibble::tibble(
+      report_id = sub(p, pattern = '^.*/(.+)_inputs/versions\\.yml$', replacement = '\\1'),
+      path = p
+    )
+  })
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the core gene analysis path data
 #'
@@ -213,7 +322,9 @@ software_version_path_data <- function(path) {
 #' gene analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -221,14 +332,22 @@ software_version_path_data <- function(path) {
 #' core_tree_path_data(path)
 #'
 #' @export
-core_tree_path_data <- function(path) {
-  output <- make_path_data_with_group(path, core_tree_path)
-  output$cluster_id <- unlist(lapply(1:nrow(output), function(index) {
-    id <- sub(basename(output$path[index]), pattern = paste0('^', output$report_group_id[index], '_cluster_'), replacement = '')
-    sub(id, pattern = '\\.treefile$', replacement = '')
-  }))
-  return(output)
+core_tree_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = core_tree_path,
+    regex = "^(.+?)_cluster_[0-9]+\\.treefile$",
+    id_types = c("report_id")
+  )
+  output <- lapply(output, function(x) {
+    x$cluster_id <- vapply(seq_len(nrow(x)), FUN.VALUE = character(1), function(i) {
+      sub(basename(x$path[i]), pattern = paste0('^', x$report_id[i], '_(cluster_[0-9]+)\\.treefile'), replacement = '\\1')
+    })
+    x[, c('report_id', 'cluster_id', 'path')]
+  })
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the considered NCBI reference metadata path data
 #'
@@ -238,17 +357,23 @@ core_tree_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @export
-considered_ref_meta_path_data <- function(path) {
-  output <- make_path_data_with_group(path, considered_ref_meta_path)
-  output$family <- unlist(lapply(basename(output$path), function(file_name) {
-    sub(file_name, pattern = '\\.tsv$', replacement = '')
-  }))
-  return(output)
+considered_ref_meta_path_data <- function(path, simplify = TRUE) {
+  ref_meta_paths <- considered_ref_meta_path(path)
+  output <- lapply(ref_meta_paths, function(p) {
+    tibble::tibble(
+      taxon_id = sub(basename(p), pattern = '^(.+?)\\.tsv', replacement = '\\1'),
+      path = p
+    )
+  })
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the downloaded reference metadata path data
 #'
@@ -258,7 +383,9 @@ considered_ref_meta_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -266,12 +393,14 @@ considered_ref_meta_path_data <- function(path) {
 #' selected_ref_meta_path_data(path)
 #'
 #' @export
-selected_ref_meta_path_data <- function(path) {
-  output <- make_path_data_with_group(path, selected_ref_meta_path)
-  output$sample_id <- unlist(lapply(basename(output$path), function(file_name) {
-    sub(file_name, pattern = '\\.tsv$', replacement = '')
-  }))
-  return(output)
+downloaded_ref_meta_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = downloaded_ref_meta_path,
+    regex = "^(.+?)\\.tsv$",
+    id_types = c("sample_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
 
 #' Find the sendsketch result path data
@@ -281,7 +410,9 @@ selected_ref_meta_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -289,13 +420,16 @@ selected_ref_meta_path_data <- function(path) {
 #' sendsketch_path_data(path)
 #'
 #' @export
-sendsketch_path_data <- function(path) {
-  output <- make_path_data_with_group(path, sendsketch_path)
-  output$sample_id <- unlist(lapply(basename(output$path), function(file_name) {
-    sub(file_name, pattern = '\\.txt$', replacement = '')
-  }))
-  return(output)
+sendsketch_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = sendsketch_path,
+    regex = "^(.+?)\\.txt$",
+    id_types = c("sample_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the SNP alignment path data
 #'
@@ -304,7 +438,9 @@ sendsketch_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -312,15 +448,16 @@ sendsketch_path_data <- function(path) {
 #' variant_align_path_data(path)
 #'
 #' @export
-variant_align_path_data <- function(path) {
-  output <- make_path_data_with_group(path, variant_align_path)
-  file_names <- basename(output$path)
-  output$ref_id <- unlist(lapply(1:nrow(output), function(index) {
-    id <- sub(file_names[index], pattern = paste0('^', output$report_group_id[index], '_'), replacement = '')
-    sub(id, pattern = '\\.fasta$', replacement = '')
-  }))
-  return(output)
+variant_align_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = variant_align_path,
+    regex = "^(.+?)\\.fasta$",
+    id_types = c("report_id", "reference_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
 
 #' Find the SNP tree path data
 #'
@@ -329,7 +466,9 @@ variant_align_path_data <- function(path) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @return `tibble` with `report_group_id` and `path` columns
+#' @inheritParams postprocess_path_data
+#' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
+#'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
 #'
 #' @examples
@@ -337,54 +476,94 @@ variant_align_path_data <- function(path) {
 #' variant_tree_path_data(path)
 #'
 #' @export
-variant_tree_path_data <- function(path) {
-  tree_paths <- variant_tree_path(path, simplify = FALSE)
-  metadata_paths <- sample_meta_path(path, simplify = FALSE)
-  
-  
-  
-  
-  output <- make_path_data_with_group(path, variant_tree_path)
-  file_names <- basename(output$path)
-  output$ref_id <- unlist(lapply(1:nrow(output), function(index) {
-    id <- sub(file_names[index], pattern = paste0('^', output$report_group_id[index], '_'), replacement = '')
-    sub(id, pattern = '\\.treefile$', replacement = '')
-  }))
-  output$cluster_id <- unlist(lapply(1:nrow(output), function(index) {
-    id <- sub(file_names[index], pattern = paste0('^', output$report_group_id[index], '_', output$ref_id[index], '_'), replacement = '')
-    sub(id, pattern = '\\.treefile$', replacement = '')
-  }))
-  return(output)
+variant_tree_path_data <- function(path, simplify = TRUE) {
+  output <- make_path_data_with_group(
+    path,
+    path_func = variant_tree_path,
+    regex = "^(.+?)\\.treefile$",
+    id_types = c("report_id", "reference_id")
+  )
+  postprocess_path_data(output, simplify = simplify)
 }
+
+
+#' Prepare list of tables for output
+#'
+#' Optionally combine a list of tables into a single table for use with path
+#' data finder functions. Also can add columns for which output folders paths
+#' came from.
+#'
+#' @param table_list The list to combine
+#' @param simplify If `FALSE` a list of [tibble::tibble()]s are returned named by the
+#'   output folder the data was found in. If `TRUE`, all data is combined into a
+#'   single [tibble::tibble()].
+#'
+#' @keywords internal
+postprocess_path_data <- function(table_list, simplify) {
+  for (outdir_path in names(table_list)) {
+    table_list[[outdir_path]]$outdir_path <- outdir_path
+  }
+  if (simplify) {
+    table_list <- do.call(combine_data_frames, table_list)
+  }
+  return(table_list)
+}
+
 
 #' Make a table with paths and report group
 #'
-#' @keywords internal
-make_path_data_with_group <- function(path, path_func) {
-  out_paths <- path_func(path)
-
-  tibble::tibble(
-    report_group_id = find_path_report_group(out_paths),
-    path = out_paths
-  )
-}
-
-#' Determine the report group for files
+#' @inheritParams find_path
+#' @param path_func A path finder function that returns a list of paths
+#' @param regex A regular expression with a single capture group that matches
+#'   the portion of the file name that is non-constant.
+#' @param id_types One or more of `'sample_id'`, `'reference_id'`,
+#'   `'report_id'` in the order that they appear in file name.
+#' @param sep The separator that is used between elements in the file name.
 #'
 #' @keywords internal
-find_path_report_group <- function(path) {
-  find_one <- function(p) {
-    while (p != dirname(p)) {
-      if ("pathogensurveillance_run_info.yml" %in% list.files(p)) {
-        return(yaml::read_yaml(file.path(p, "pathogensurveillance_run_info.yml"))$group_id)
+make_path_data_with_group <- function(path, path_func, regex, id_types, sep = '_') {
+  path_data <- path_func(path)
+  sample_meta <- sample_meta_parsed(path, simplify = FALSE)
+  reference_meta <- ref_meta_parsed(path, simplify = FALSE)
+  
+  output <- lapply(names(path_data), function(outdir) {
+    if (length(path_data[[outdir]]) == 0) {
+      # Return empty table if no paths
+      out <- data.frame(matrix(vector(), 0, length(id_types) + 1,
+                               dimnames = list(c(), c(id_types, 'path'))),
+                        stringsAsFactors = FALSE)
+    } else {
+      if (is.null(regex)) {
+        out <- data.frame(
+          report_id = NA_character_,
+          path = path_data[[outdir]]
+        )
+      } else {
+        # NOTE: Calculating all possible combinations is not very efficient, but might be good enough.
+        # Need a more robust way of naming files for a regex-based method to work reliably.
+        ids <- list(
+          sample_id = unique(sample_meta[[outdir]]$sample_id),
+          reference_id = unique(reference_meta[[outdir]]$ref_id),
+          report_id = unique(sample_meta[[outdir]]$report_group_ids)
+        )
+        combinations <- do.call(expand.grid, ids[id_types]) 
+        combinations$combined <- apply(combinations, MARGIN = 1, paste0, collapse = sep)
+        variable_name_part <- sub(basename(path_data[[outdir]]), pattern = regex, replacement = '\\1')
+        variable_cols <- combinations[match(variable_name_part, combinations$combined), id_types, drop = FALSE]
+        out <- cbind(variable_cols, path = path_data[[outdir]])
       }
-      p <- dirname(p)
+      
+      # If report ID is included and is NA, check if it can be inferred from the report input directory name
+      is_report_input_dir <- grepl(outdir, pattern = 'report_group_data/.+_inputs$')
+      if ("report_id" %in% id_types && is_report_input_dir) {
+        out$report_id[is.na(out$report_id)] <- sub(outdir, pattern = '^.*report_group_data/(.+)_inputs$', replacement = '\\1')
+      }
     }
-    return(NA_character_)
-  }
-  if (length(path) == 0) {
-    return(character(0))
-  } else {
-    return(unlist(lapply(path, find_one)))
-  }
+    
+    rownames(out) <- NULL
+    tibble::as_tibble(out)
+  })
+  names(output) <- names(path_data)
+  
+  return(output)
 }

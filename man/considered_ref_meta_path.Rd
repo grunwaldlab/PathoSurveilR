@@ -4,7 +4,7 @@
 \alias{considered_ref_meta_path}
 \title{Find the considered NCBI reference metadata paths}
 \usage{
-considered_ref_meta_path(path, format = "tsv")
+considered_ref_meta_path(path, format = "tsv", simplify = FALSE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance output.}

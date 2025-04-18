@@ -4,17 +4,23 @@
 \alias{sample_meta_path_data}
 \title{Find sample metadata path data}
 \usage{
-sample_meta_path_data(path)
+sample_meta_path_data(path, simplify = TRUE)
 }
 \arguments{
-\item{path}{The path to one or more folders that contain pathogensurveillance output.}
+\item{path}{The path to one or more folders that contain pathogensurveillance
+output.}
+
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
-\code{tibble} with \code{report_group_id} and \code{path} columns
+A \code{\link[tibble:tibble]{tibble::tibble()}} with one row per path if \code{simplify = TRUE} or a list of
+such \code{\link[tibble:tibble]{tibble::tibble()}}s for each output directory found if \code{simplify = FALSE}.
 }
 \description{
-Return the file path data to the TSV containing the sample metadata for a given
-pathogensurveillance output folder.
+Return the file path data to the TSV containing the sample metadata for a
+given pathogensurveillance output folder.
 }
 \examples{
 path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
@@ -28,11 +34,11 @@ Other path tables:
 \code{\link{considered_ref_meta_path_data}()},
 \code{\link{core_ref_path_data}()},
 \code{\link{core_tree_path_data}()},
+\code{\link{downloaded_ref_meta_path_data}()},
 \code{\link{estimated_ani_matrix_path_data}()},
 \code{\link{pocp_matrix_path_data}()},
 \code{\link{ref_meta_path_data}()},
 \code{\link{run_info_path_data}()},
-\code{\link{selected_ref_meta_path_data}()},
 \code{\link{sendsketch_path_data}()},
 \code{\link{software_version_path_data}()},
 \code{\link{status_message_path_data}()},

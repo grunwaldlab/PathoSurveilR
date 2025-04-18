@@ -4,11 +4,14 @@
 \alias{ref_meta_parsed}
 \title{Get parsed reference metadata}
 \usage{
-ref_meta_parsed(path)
+ref_meta_parsed(path, simplify = TRUE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
+
+\item{simplify}{If \code{TRUE}, return a single table with data from all files rather than
+a list of tables for each output directory.}
 }
 \value{
 A \code{\link[tibble:tibble]{tibble::tibble()}} with reference metadata
