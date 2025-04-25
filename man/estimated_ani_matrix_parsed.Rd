@@ -4,17 +4,24 @@
 \alias{estimated_ani_matrix_parsed}
 \title{Get estimated ANI distance matrix}
 \usage{
-estimated_ani_matrix_parsed(path)
+estimated_ani_matrix_parsed(path, simplify = FALSE, as_edge_list = FALSE)
 }
 \arguments{
-\item{path}{The path to one or more folders that contain
-pathogensurveillance output.}
+\item{path}{The path to one or more folders that contain pathogensurveillance
+output.}
+
+\item{simplify}{If \code{TRUE}, combine output into a single matrix, filling in
+the gaps with \code{NA}.}
+
+\item{as_edge_list}{If \code{TRUE}, return a table with columns for the row,
+column, and value for every unique cell in the combined matrix instead of a
+matrix.}
 }
 \value{
-a \code{list} of ANI matrices
+a \code{list} of ANI matrices or edge lists depending on the values of \code{simplify} and \code{as_edge_list}
 }
 \description{
-Return a list of \code{\link[base:data.frame]{base::data.frame()}}s with the estimated pairwise ANI values
+Return a list of \code{\link[base:matrix]{base::matrix()}} with the estimated pairwise ANI values
 calculated by sourmash.
 }
 \examples{

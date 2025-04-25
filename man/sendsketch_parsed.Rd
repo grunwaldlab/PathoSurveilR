@@ -4,14 +4,30 @@
 \alias{sendsketch_parsed}
 \title{Get parsed sendsketch results}
 \usage{
-sendsketch_parsed(path, sample_id = NULL, only_best = FALSE)
+sendsketch_parsed(
+  path,
+  sample_id = NULL,
+  only_best = FALSE,
+  update_taxonomy = FALSE,
+  simplify = TRUE
+)
 }
 \arguments{
-\item{path}{The path to one or more folders that contain
-pathogensurveillance output.}
+\item{path}{The path to one or more folders that contain pathogensurveillance
+output.}
+
+\item{sample_id}{One or more sample IDs to parse the results for. Default:
+include all samples.}
 
 \item{only_best}{Only return the best hit for each combination of report
 group and sample.}
+
+\item{update_taxonomy}{If \code{TRUE} look up the current taxonomy classification
+using the NCBI taxon ID rather than using the existing one.}
+
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
 A \code{\link[tibble:tibble]{tibble::tibble()}} with the sendsketch output combined
@@ -31,7 +47,6 @@ Other parsers:
 \code{\link{core_tree_parsed}()},
 \code{\link{multigene_tree_parsed}()},
 \code{\link{sendsketch_taxa_present}()},
-\code{\link{sendsketch_taxonomy_data_parsed}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
 \code{\link{software_version_parsed}()},
 \code{\link{tree_parsed}()},

@@ -4,13 +4,17 @@
 \alias{variant_tree_parsed}
 \title{Get SNP phylogeny}
 \usage{
-variant_tree_parsed(path, rename = TRUE)
+variant_tree_parsed(path, rename = TRUE, simplify = TRUE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
 
 \item{rename}{If \code{TRUE}, rename the tip labels to sample IDs and reference IDs.}
+
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
 List of \code{\link[ape:read.tree]{ape::phylo()}} objects named by file path
@@ -31,7 +35,6 @@ Other parsers:
 \code{\link{multigene_tree_parsed}()},
 \code{\link{sendsketch_parsed}()},
 \code{\link{sendsketch_taxa_present}()},
-\code{\link{sendsketch_taxonomy_data_parsed}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
 \code{\link{software_version_parsed}()},
 \code{\link{tree_parsed}()},

@@ -4,11 +4,15 @@
 \alias{run_info_parsed}
 \title{Get parsed report groups}
 \usage{
-run_info_parsed(path)
+run_info_parsed(path, simplify = TRUE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
+
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
 A \code{\link[base:character]{base::character()}} vector with the groups from all input paths

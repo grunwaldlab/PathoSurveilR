@@ -4,14 +4,28 @@
 \alias{sendsketch_taxa_present}
 \title{Get taxa predicted by sendsketch results}
 \usage{
-sendsketch_taxa_present(path, sample_id = NULL, only_best = FALSE)
+sendsketch_taxa_present(
+  path,
+  ani_thresh = c(species = 95, genus = 90, family = 70),
+  comp_thresh = c(species = 40, genus = 15, family = 5),
+  sample_id = NULL,
+  only_best = FALSE,
+  simplify = TRUE
+)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance
 output.}
 
+\item{sample_id}{One or more sample IDs to parse the results for. Default:
+include all samples.}
+
 \item{only_best}{Only return taxa predicted by the best hit for each
 combination of report group and sample.}
+
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
 A \code{\link[tibble:tibble]{tibble::tibble()}} with one row per taxon found
@@ -26,7 +40,6 @@ Other parsers:
 \code{\link{core_tree_parsed}()},
 \code{\link{multigene_tree_parsed}()},
 \code{\link{sendsketch_parsed}()},
-\code{\link{sendsketch_taxonomy_data_parsed}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
 \code{\link{software_version_parsed}()},
 \code{\link{tree_parsed}()},

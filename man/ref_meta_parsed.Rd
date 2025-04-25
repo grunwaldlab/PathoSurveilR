@@ -10,11 +10,14 @@ ref_meta_parsed(path, simplify = TRUE)
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
 
-\item{simplify}{If \code{TRUE}, return a single table with data from all files rather than
-a list of tables for each output directory.}
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
-A \code{\link[tibble:tibble]{tibble::tibble()}} with reference metadata
+A \code{\link[tibble:tibble]{tibble::tibble()}} with the reference metadata if
+\code{simplify = TRUE} or a list of such \code{\link[tibble:tibble]{tibble::tibble()}}s for each output
+directory found if \code{simplify = FALSE}.
 }
 \description{
 Return a \code{\link[tibble:tibble]{tibble::tibble()}} (table) with reference metadata. The contents of

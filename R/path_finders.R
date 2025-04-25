@@ -535,10 +535,12 @@ find_path <- function(path, out_dir_subpath, out_dir_pattern, report_dir_subpath
   report_dir_paths <- find_report_input_result_path(path)
   
   # Remove any report input paths that are present inside entire output directories
-  report_dir_in_output_dir <- vapply(report_dir_paths, FUN.VALUE = logical(1), function(p) {
-    any(startsWith(p, paste0(output_dir_paths, '/')))
-  })
-  report_dir_paths <- report_dir_paths[! report_dir_in_output_dir]
+  if (length(output_dir_paths) > 0) {
+    report_dir_in_output_dir <- vapply(report_dir_paths, FUN.VALUE = logical(1), function(p) {
+      any(startsWith(p, paste0(output_dir_paths, '/')))
+    })
+    report_dir_paths <- report_dir_paths[! report_dir_in_output_dir]
+  }
   
   # Find files of interest inside pathogensurveillance output directories
   output <- list()

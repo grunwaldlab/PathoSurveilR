@@ -297,7 +297,7 @@ print_figures_with_selector <- function(plot_func, selector, id_prefix, imglist_
 sendsketch_best_hits <- function(sketch_data, sort_columns = c("WKID", "ANI", "Complt"), top_n = 1) {
   order_data <- c(list(decreasing = TRUE), unname(sketch_data[sort_columns]))
   sketch_data <- sketch_data[do.call(order, order_data), , drop = FALSE]
-  split_data <- split(sketch_data, sketch_data[c('sample_id', 'report_group_id')], drop = TRUE)
+  split_data <- split(sketch_data, sketch_data[c('sample_id', 'outdir_path')], drop = TRUE)
   final_table <- do.call(rbind, lapply(split_data, function(x) {
     x[seq_len(top_n), , drop = FALSE]
   }))
@@ -349,4 +349,83 @@ combine_data_frames <- function(...) {
   rownames(combined) <- NULL
   
   return(combined)
+}
+
+
+#' Combine a list of matrices
+#'
+#' Combine a list of matrices
+#'
+#' @param matrices list of matrices
+#' @param as_edge_list If `TRUE`, return a table with columns for the row,
+#'   column, and value for every unique cell in the combined matrix instead of a
+#'   matrix.
+#'
+#' @keywords internal
+combine_matrices <- function(matrices, as_edge_list = FALSE) {
+  # Validate input
+  if (! is.list(matrices) || ! all(sapply(matrices, is.matrix))) {
+    stop("Input must be a list of matrices")
+  }
+  
+  # Convert to edge list
+  edges <- do.call(rbind, lapply(matrices, function(x) {
+    as.data.frame(as.table(x))
+  }))
+  colnames(edges) <- c("row", "col", "value")
+  all_ids <- unique(c(edges$col, edges$row))
+  
+  # Check for duplicated row/col with different values
+  edges <- unique(edges)
+  is_duplicated <- duplicated(edges[, 1:2])
+  if (any(is_duplicated)) {
+    warning("Shared column names with differing values detected. Removing duplicated values.")
+  }
+  edges <- edges[! is_duplicated, , drop = FALSE]
+  
+  if (as_edge_list) {
+    return(edges)
+  } else {
+    # Add missing combinations
+    filler <- expand.grid(all_ids, all_ids)
+    filler$value <- NA
+    colnames(filler) <- c("row", "col", "value")
+    edges <- rbind(edges, filler)
+    edges <- edges[! duplicated(edges[, 1:2]), , drop = FALSE]
+    
+    # Combine into a matrix
+    edges <- edges[order(match(edges$col, all_ids), match(edges$row, all_ids)), , drop = FALSE]
+    combined_matrix <- edges$value
+    dim(combined_matrix) <- c(length(all_ids), length(all_ids))
+    rownames(combined_matrix) <- all_ids
+    colnames(combined_matrix) <- all_ids
+    return(combined_matrix)
+  }
+}
+
+
+#' Prepare list of tables for output
+#'
+#' Optionally combine a list of tables into a single table for use with path
+#' data finder functions. Also can add columns for which output folders paths
+#' came from.
+#'
+#' @param table_list The list to combine
+#' @param simplify If `FALSE` a list of [tibble::tibble()]s are returned named by the
+#'   output folder the data was found in. If `TRUE`, all data is combined into a
+#'   single [tibble::tibble()].
+#'
+#' @keywords internal
+postprocess_table_list <- function(table_list, simplify) {
+  for (outdir_path in names(table_list)) {
+    if (! 'outdir_path' %in% colnames(table_list[[outdir_path]])) {
+      table_list[[outdir_path]]$outdir_path <- outdir_path
+    }
+  }
+  if (simplify) {
+    table_list <- do.call(combine_data_frames, table_list)
+    col_order <- c(colnames(table_list)[colnames(table_list) != 'outdir_path'], 'outdir_path')
+    table_list <- table_list[, col_order, drop = FALSE]
+  }
+  return(table_list)
 }

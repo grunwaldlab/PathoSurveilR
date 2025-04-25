@@ -5,7 +5,7 @@
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -23,7 +23,7 @@ sample_meta_path_data <- function(path, simplify = TRUE) {
       path = p
     )
   })
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -33,7 +33,7 @@ sample_meta_path_data <- function(path, simplify = TRUE) {
 #' pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -51,7 +51,7 @@ ref_meta_path_data <- function(path, simplify = TRUE) {
       path = p
     )
   })
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -63,7 +63,7 @@ ref_meta_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -86,7 +86,7 @@ busco_tree_path_data <- function(path, simplify = TRUE) {
     })
     x[, c('report_id', 'cluster_id', 'path')]
   })
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -97,7 +97,7 @@ busco_tree_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -114,7 +114,7 @@ busco_ref_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)_busco_references\\.tsv$",
     id_types = c("report_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -125,7 +125,7 @@ busco_ref_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -142,7 +142,7 @@ core_ref_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)_core_references\\.tsv$",
     id_types = c("report_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -153,7 +153,7 @@ core_ref_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -170,7 +170,7 @@ run_info_path_data <- function(path, simplify = TRUE) {
     regex = NULL,
     id_types = c("report_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -181,7 +181,7 @@ run_info_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -198,7 +198,7 @@ variant_ref_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)_mapping_references\\.tsv$",
     id_types = c("report_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -209,7 +209,7 @@ variant_ref_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -226,7 +226,7 @@ status_message_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)\\.tsv$",
     id_types = c("report_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -237,7 +237,7 @@ status_message_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -254,7 +254,7 @@ pocp_matrix_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)_pocp\\.tsv$",
     id_types = c("report_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -266,7 +266,7 @@ pocp_matrix_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -283,7 +283,7 @@ estimated_ani_matrix_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)_comp\\.csv$",
     id_types = c("report_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -294,7 +294,7 @@ estimated_ani_matrix_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -312,7 +312,7 @@ software_version_path_data <- function(path, simplify = TRUE) {
       path = p
     )
   })
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -322,7 +322,7 @@ software_version_path_data <- function(path, simplify = TRUE) {
 #' gene analysis for a given pathogensurveillance output folder.
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -345,7 +345,7 @@ core_tree_path_data <- function(path, simplify = TRUE) {
     })
     x[, c('report_id', 'cluster_id', 'path')]
   })
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -357,7 +357,7 @@ core_tree_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -371,7 +371,7 @@ considered_ref_meta_path_data <- function(path, simplify = TRUE) {
       path = p
     )
   })
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -383,7 +383,7 @@ considered_ref_meta_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -400,7 +400,7 @@ downloaded_ref_meta_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)\\.tsv$",
     id_types = c("sample_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 #' Find the sendsketch result path data
@@ -410,7 +410,8 @@ downloaded_ref_meta_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
+#' 
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -427,7 +428,7 @@ sendsketch_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)\\.txt$",
     id_types = c("sample_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -438,7 +439,7 @@ sendsketch_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -455,7 +456,7 @@ variant_align_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)\\.fasta$",
     id_types = c("report_id", "reference_id")
   )
-  postprocess_path_data(output, simplify = simplify)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 
@@ -466,7 +467,7 @@ variant_align_path_data <- function(path, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @inheritParams postprocess_path_data
+#' @inheritParams postprocess_table_list
 #' @return A [tibble::tibble()] with one row per path if `simplify = TRUE` or a list of
 #'   such [tibble::tibble()]s for each output directory found if `simplify = FALSE`.
 #' @family path tables
@@ -483,30 +484,7 @@ variant_tree_path_data <- function(path, simplify = TRUE) {
     regex = "^(.+?)\\.treefile$",
     id_types = c("report_id", "reference_id")
   )
-  postprocess_path_data(output, simplify = simplify)
-}
-
-
-#' Prepare list of tables for output
-#'
-#' Optionally combine a list of tables into a single table for use with path
-#' data finder functions. Also can add columns for which output folders paths
-#' came from.
-#'
-#' @param table_list The list to combine
-#' @param simplify If `FALSE` a list of [tibble::tibble()]s are returned named by the
-#'   output folder the data was found in. If `TRUE`, all data is combined into a
-#'   single [tibble::tibble()].
-#'
-#' @keywords internal
-postprocess_path_data <- function(table_list, simplify) {
-  for (outdir_path in names(table_list)) {
-    table_list[[outdir_path]]$outdir_path <- outdir_path
-  }
-  if (simplify) {
-    table_list <- do.call(combine_data_frames, table_list)
-  }
-  return(table_list)
+  postprocess_table_list(output, simplify = simplify)
 }
 
 

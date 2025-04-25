@@ -4,11 +4,15 @@
 \alias{software_version_parsed}
 \title{Parse Software Version Metadata from YAML File}
 \usage{
-software_version_parsed(path)
+software_version_parsed(path, simplify = TRUE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
+
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
 A \code{\link[tibble:tibble]{tibble::tibble()}} with columns \code{module}, \code{program}, and \code{version}
@@ -31,7 +35,6 @@ Other parsers:
 \code{\link{multigene_tree_parsed}()},
 \code{\link{sendsketch_parsed}()},
 \code{\link{sendsketch_taxa_present}()},
-\code{\link{sendsketch_taxonomy_data_parsed}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
 \code{\link{tree_parsed}()},
 \code{\link{variant_align_parsed}()},
