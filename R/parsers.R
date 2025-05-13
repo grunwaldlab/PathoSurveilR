@@ -500,39 +500,43 @@ sendsketch_taxonomy_parsed <- function(path, as_table = TRUE, only_shared = FALS
 }
 
 
-# #' Get taxa predicted by sendsketch results
-# #'
-# #' Return which taxa are predicted to be present given sendsketch results
-# #' associated with directory paths containing `pathogensurveillance` output.
-# #'
-# #' @param path The path to one or more folders that contain pathogensurveillance
-# #'   output.
-# #' @param only_best Only return taxa predicted by the best hit for each
-# #'   combination of report group and sample.
-# #' @inheritParams sendsketch_parsed
-# #' @inheritParams postprocess_table_list
-# #'
-# #' @return A [tibble::tibble()] with one row per taxon found
-# #' @family parsers
-# #'
-# #' @export
-# sendsketch_taxa_present <- function(path, ani_thresh = c(species = 95, genus = 90, family = 70),
-#                                     comp_thresh = c(species = 40, genus = 15, family = 5),
-#                                     sample_id = NULL, only_best = FALSE, simplify = TRUE) {
-#   sketch_data <- sendsketch_taxonomy_parsed(path, sample_id = sample_id, append = TRUE, simplify = FALSE)
-#   
-#   lapply(sketch_data, function(table) {
-#     # Filter data by threshold and extract passing taxon names
-#     filter_and_extract <- function(rank) {
-#       subset_ids <- table$TaxID[table$ANI > ani_threshold[rank] & table$Complt > complt_threshold[rank]]
-#       subset_class_data <- class_data[class_data$tip_taxon_id %in% subset_ids & class_data$rank == rank, , drop = FALSE]
-#       subset_class_data[, c('taxon_id', 'name', 'rank'), drop = FALSE]
-#     }
-#     output_data <- unique(do.call(rbind, lapply(names(ani_threshold), filter_and_extract)))
-#     
-#   })
-#   
-# }
+#' Get taxa predicted by sendsketch results
+#'
+#' Return which taxa are predicted to be present given sendsketch results
+#' associated with directory paths containing `pathogensurveillance` output.
+#'
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
+#' @param only_best Only return taxa predicted by the best hit for each
+#'   combination of report group and sample.
+#' @inheritParams sendsketch_parsed
+#' @inheritParams postprocess_table_list
+#'
+#' @return A [tibble::tibble()] with one row per taxon found
+#' @family parsers
+#'
+#' @export
+sendsketch_taxa_present <- function(path, ani_thresh = c(species = 95, genus = 90, family = 70),
+                                    comp_thresh = c(species = 40, genus = 15, family = 5),
+                                    sample_id = NULL, only_best = FALSE, simplify = TRUE) {
+  all_tax_data <- sendsketch_taxonomy_parsed(path = path, as_table = FALSE, only_shared = FALSE,
+                                         sample_id = sample_id, only_best = only_best, simplify = FALSE)
+  all_sketch_data <- sendsketch_parsed(path = path, sample_id = sample_id, only_best = only_best, simplify = FALSE)
+  
+  output <- lapply(names(all_tax_data), function(out_path) {
+    tax_data <- all_tax_data[[out_path]]
+    sketch_data <- all_sketch_data[[out_path]]
+    filter_and_extract <- function(rank) {
+      subset_ids <- sketch_data$TaxID[sketch_data$ANI > ani_thresh[rank] & sketch_data$Complt > comp_thresh[rank]]
+      subset_class_data <- tax_data[tax_data$query_id %in% subset_ids & tax_data$rank == rank, , drop = FALSE]
+      subset_class_data[, c('id', 'name', 'rank'), drop = FALSE]
+    }
+    output_data <- unique(do.call(rbind, lapply(names(ani_thresh), filter_and_extract)))
+  })
+  names(output) <- names(all_tax_data)
+
+  postprocess_table_list(output, simplify = simplify)
+}
 
 
 #' Parse Software Version Metadata from YAML File

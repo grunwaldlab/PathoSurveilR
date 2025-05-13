@@ -7,12 +7,9 @@
 sendsketch_taxonomy_parsed(
   path,
   as_table = TRUE,
-  remove_ranks = FALSE,
   only_shared = FALSE,
-  append = FALSE,
   sample_id = NULL,
   only_best = FALSE,
-  update_taxonomy = FALSE,
   simplify = TRUE
 )
 }
@@ -20,18 +17,8 @@ sendsketch_taxonomy_parsed(
 \item{path}{The path to one or more folders that contain pathogensurveillance
 output.}
 
-\item{as_table}{If \code{TRUE}, return a table of classification data with a
-column for each rank rather than a character vector with all of the
-classifications.}
-
-\item{remove_ranks}{If \code{TRUE}, remove the rank information from the taxonomy.
-Only has an effect if \code{as_table} is \code{FALSE}.}
-
 \item{only_shared}{If \code{TRUE}, only return the ranks that are present in all
 of the inputs. Only has an effect if \code{as_table} is \code{TRUE}.}
-
-\item{append}{If \code{TRUE}, append output to the rest of the parsed sendskech
-results. Only has an effect if \code{as_table} is \code{TRUE}.}
 
 \item{sample_id}{One or more sample IDs to parse the results for. Default:
 include all samples.}
@@ -39,12 +26,12 @@ include all samples.}
 \item{only_best}{Only return the best hit for each combination of report
 group and sample.}
 
-\item{update_taxonomy}{If \code{TRUE} look up the current taxonomy classification
-using the NCBI taxon ID rather than using the existing one.}
-
 \item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
 output folder the data was found in. If \code{TRUE}, all data is combined into a
 single \code{\link[tibble:tibble]{tibble::tibble()}}.}
+
+\item{ranks_as_cols}{If \code{TRUE}, return a table with a column for each rank
+instead of a table with one taxon per row.}
 }
 \value{
 A \code{\link[base:character]{base::character()}} vector of taxonomic classifications, each

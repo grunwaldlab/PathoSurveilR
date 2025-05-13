@@ -32,7 +32,9 @@ sample_meta_path <- function(path, simplify = FALSE) {
     report_dir_pattern =  '^sample_data\\.tsv$',
     simplify = FALSE
   )
-  output <- c(report_version, user_version[! names(user_version) %in% names(report_version)])
+  has_report_version <- vapply(report_version, FUN.VALUE = numeric(1), length) > 0
+  has_user_version <- vapply(user_version, FUN.VALUE = numeric(1), length) > 0
+  output <- c(report_version[has_report_version], user_version[has_user_version & ! has_report_version])
   
   if (simplify) {
     output <- unname(unlist(output))
@@ -76,7 +78,9 @@ ref_meta_path <- function(path, simplify = FALSE) {
     report_dir_pattern =  '^reference_data\\.tsv$',
     simplify = simplify
   )
-  output <- c(report_version, user_version[! names(user_version) %in% names(report_version)])
+  has_report_version <- vapply(report_version, FUN.VALUE = numeric(1), length) > 0
+  has_user_version <- vapply(user_version, FUN.VALUE = numeric(1), length) > 0
+  output <- c(report_version[has_report_version], user_version[has_user_version & ! has_report_version])
   
   if (simplify) {
     output <- unname(unlist(output))
