@@ -429,3 +429,8 @@ postprocess_table_list <- function(table_list, simplify) {
   }
   return(table_list)
 }
+
+
+make_empty_data_frame <- function(cols) {
+  data.frame(matrix(vector(), 0, length(cols), dimnames=list(c(), cols)))
+}

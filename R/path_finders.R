@@ -587,7 +587,8 @@ find_path_in_output_directory <- function(path, subpath, pattern) {
   unlist(lapply(search_path, function(p) {
     subsubpaths <- list.files(p, recursive = TRUE, include.dirs = TRUE, all.files = TRUE)
     subsubpaths <- subsubpaths[grepl(subsubpaths, pattern = pattern)]
-    file.path(p, subsubpaths)
+    out <- file.path(p, subsubpaths)
+    out[file.exists(out)]
   }))
 }
 

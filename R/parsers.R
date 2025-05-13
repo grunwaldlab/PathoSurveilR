@@ -310,13 +310,14 @@ sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE, update_
     
     # Parse all files and combine them into one data frame
     if (nrow(table) == 0) {
-      cols <- c("sample_id", "WKID", "KID", "ANI", "SSU", "SSULen", "Complt", 
-        "Contam", "Contam2", "uContam", "Score", "E-Val", "Depth", "Depth2", 
-        "Volume", "RefHits", "Matches", "Unique", "Unique2", "Unique3", 
-        "noHit", "Length", "TaxID", "ImgID", "gBases", "gKmers", "gSize", 
-        "gSeqs", "GC", "rDiv", "qDiv", "rSize", "qSize", "cHits", "taxName", 
-        "file", "seqName", "taxonomy", "outdir_path")
-      sketch_data <-  data.frame(matrix(vector(), 0, length(cols), dimnames=list(c(), cols)))
+      sketch_data <- make_empty_data_frame(
+        c("sample_id", "WKID", "KID", "ANI", "SSU", "SSULen", "Complt", 
+          "Contam", "Contam2", "uContam", "Score", "E-Val", "Depth", "Depth2", 
+          "Volume", "RefHits", "Matches", "Unique", "Unique2", "Unique3", 
+          "noHit", "Length", "TaxID", "ImgID", "gBases", "gKmers", "gSize", 
+          "gSeqs", "GC", "rDiv", "qDiv", "rSize", "qSize", "cHits", "taxName", 
+          "file", "seqName", "taxonomy", "outdir_path")
+      )
     } else {
       sketch_data <- do.call(rbind, lapply(seq_len(nrow(table)), function(i) {
         data <- suppressWarnings(utils::read.table(table$path[i], sep = '\t', skip = 2, check.names = FALSE, header = TRUE))
@@ -343,23 +344,10 @@ sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE, update_
     
     # Look up taxonomy based on taxon ID for most up to date taxonomy
     if (update_taxonomy && nrow(sketch_data) > 0)  {
-      all_tax_ids <- unique(sketch_data$TaxID)
-      tax_id_batches <- split(all_tax_ids, ceiling(seq_along(all_tax_ids) / 50))
-      classifications <- unlist(lapply(tax_id_batches, function(tax_ids) {
-        raw_xml = rentrez::entrez_fetch(db = 'taxonomy', id = tax_ids, rettype = 'xml')
-        Sys.sleep(0.33)
-        get_capture_group <- function(x, pattern) {
-          matches <- regmatches(x, gregexpr(pattern, x))[[1]]
-          sub(matches, pattern = pattern, replacement = '\\1')
-        }
-        class_xml <- get_capture_group(raw_xml, '<LineageEx>(.+?)</LineageEx>')
-        class_names <- lapply(class_xml, get_capture_group, pattern = '<ScientificName>(.+?)</ScientificName>')
-        class_ranks <- lapply(class_xml, get_capture_group, pattern = '<Rank>(.+?)</Rank>')
-        classifications  <- vapply(seq_len(length(class_names)), FUN.VALUE = character(1), function(i) {
-          paste0(class_ranks[[i]], ':', class_names[[i]], collapse = ';')
-        })
-      }))
-      names(classifications) <- all_tax_ids
+      class_data <- lookup_ncbi_taxon_id_classification(sketch_data$TaxID, match_input = FALSE, simplify = FALSE)
+      classifications  <- vapply(class_data, FUN.VALUE = character(1), function(x) {
+        paste0(x$rank, ':', x$name, collapse = ';')
+      })
       sketch_data$taxonomy <- classifications[sketch_data$TaxID]
     }
     
@@ -370,6 +358,57 @@ sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE, update_
 }
 
 
+#' @param match_input If `TRUE`, reduplicate the output to match 1:1 with the input.
+#' @param simplify If `TRUE`, combine list of tibbles into a single tibble
+#' 
+#' @keywords internal
+lookup_ncbi_taxon_id_classification <- function(taxon_ids, match_input = TRUE, simplify = FALSE) {
+  all_tax_ids <- unique(taxon_ids)
+  tax_id_batches <- split(all_tax_ids, ceiling(seq_along(all_tax_ids) / 50))
+  output <- lapply(tax_id_batches, function(id_batch) {
+    # Look up taxon info for each ID
+    raw_xml = rentrez::entrez_fetch(db = 'taxonomy', id = id_batch, rettype = 'xml')
+    Sys.sleep(0.33)
+    
+    # Parse XML to get IDs, names, and ranks of parent taxa
+    xml_data <- xml2::read_xml(raw_xml)
+    result_data <- xml2::xml_find_all(xml_data, "/TaxaSet/Taxon")
+    get_one_value <- function(key) {
+      lapply(result_data, function(x) {
+        query_value <- xml2::xml_text(xml2::xml_find_all(x, paste0("./", key)))
+        lineage_values <- xml2::xml_text(xml2::xml_find_all(x, paste0("./LineageEx/Taxon/", key)))
+        c(lineage_values, query_value)
+      })
+    }
+    taxon_ids <- get_one_value('TaxId')
+    taxon_names <- get_one_value('ScientificName')
+    taxon_ranks <- get_one_value('Rank')
+    
+    # Format as table
+    lapply(seq_along(id_batch), function(i) {
+      tibble::tibble(
+        query_id = id_batch[i],
+        id = taxon_ids[[i]],
+        name = taxon_names[[i]],
+        rank = taxon_ranks[[i]]
+      )
+    })
+  })
+  output <- unlist(output, recursive = FALSE)
+  names(output) <- all_tax_ids
+  
+  if (match_input) {
+    output <- output[taxon_ids]
+  }
+  
+  if (simplify) {
+    output <- do.call(rbind, output)
+  }
+  
+  return(output)
+}
+
+
 #' Get parsed sendsketch taxonomy
 #'
 #' Return the taxonomic classification in sendsketch results associated with
@@ -377,15 +416,10 @@ sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE, update_
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @param as_table If `TRUE`, return a table of classification data with a
-#'   column for each rank rather than a character vector with all of the
-#'   classifications.
-#' @param remove_ranks If `TRUE`, remove the rank information from the taxonomy.
-#'   Only has an effect if `as_table` is `FALSE`.
+#' @param ranks_as_cols If `TRUE`, return a table with a column for each rank
+#'   instead of a table with one taxon per row.
 #' @param only_shared If `TRUE`, only return the ranks that are present in all
 #'   of the inputs. Only has an effect if `as_table` is `TRUE`.
-#' @param append If `TRUE`, append output to the rest of the parsed sendskech
-#'   results. Only has an effect if `as_table` is `TRUE`.
 #' @inheritParams sendsketch_parsed
 #' @inheritParams postprocess_table_list
 #'
@@ -398,19 +432,52 @@ sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE, update_
 #' sendsketch_taxonomy_parsed(path)
 #'
 #' @export
-sendsketch_taxonomy_parsed <- function(path, as_table = TRUE, remove_ranks = FALSE, only_shared = FALSE, append = FALSE, 
-                                       sample_id = NULL, only_best = FALSE, update_taxonomy = FALSE, simplify = TRUE) {
-  sendsketch_data <- sendsketch_parsed(path, sample_id = sample_id, only_best = only_best, update_taxonomy = update_taxonomy, simplify = FALSE)
+sendsketch_taxonomy_parsed <- function(path, as_table = TRUE, only_shared = FALSE,
+                                       sample_id = NULL, only_best = FALSE, simplify = TRUE) {
+  sendsketch_data <- sendsketch_parsed(path, sample_id = sample_id, only_best = only_best,
+                                       update_taxonomy = FALSE, simplify = FALSE)
+  all_tax_ids <- unlist(lapply(sendsketch_data, function(x) x$TaxID))
+  class_data <- lookup_ncbi_taxon_id_classification(all_tax_ids, match_input = FALSE, simplify = FALSE)
   
-  if (as_table) {
-    output <- lapply(sendsketch_data, function(table) {
+  process_one <- function(table) {
+    if (nrow(table) == 0) {
+      if (as_table) {
+        return(tibble::as_tibble(make_empty_data_frame(
+          c("taxon_id", "phylum", "order", "family", "genus", "species")
+        )))
+      } else {
+        return(tibble::as_tibble(make_empty_data_frame(
+          c("query_id", "id", "name", "rank")
+        )))
+      }
+    }
+    
+    table_tax_ids <- unique(table$TaxID)
+    table_class_data <- class_data[table_tax_ids]
+    
+    # Remove data for ranks not shared among all results
+    if (only_shared) {
+      if (simplify) {
+        all_ranks <- unlist(lapply(class_data, function(x) unique(x$rank)))
+        is_shared <- table(all_ranks) == length(class_data)
+      } else {
+        all_ranks <- unlist(lapply(table_class_data, function(x) unique(x$rank)))
+        is_shared <- table(all_ranks) == length(table_class_data)
+      }
+      shared_ranks <- names(is_shared)[is_shared]
+      table_class_data <- lapply(table_class_data, function(x) x[x$rank %in% shared_ranks, , drop = FALSE])
+    }
+    
+    # Remove ranks that are placeholders for missing ranks
+    placeholder_ranks <- c('clade', 'no rank')
+    table_class_data <- lapply(table_class_data, function(x) x[! x$rank %in% placeholder_ranks, , drop = FALSE])
+    
+    if (as_table) {
       # Reformat with ranks as columns
-      parts <- lapply(seq_len(nrow(table)), function(i) {
-        split_tax <- strsplit(table$taxonomy[i], split = ';', fixed = TRUE)[[1]]
-        taxon_names <- gsub(split_tax, pattern = '^[a-z]+:', replacement = '')
-        ranks <- gsub(split_tax, pattern = '^([a-z]*):?.+$', replacement = '\\1')
-        names(taxon_names) <- ifelse(ranks == '', 'tip', ranks)
-        tibble::as_tibble(as.list(c(sample_id = names(table$taxonomy)[i], taxon_names)))
+      parts <- lapply(table_tax_ids, function(id) {
+        values <- table_class_data[[id]][['name']]
+        names(values) <- table_class_data[[id]]$rank
+        tibble::as_tibble(c(taxon_id = id, as.list(values)))
       })
       
       # Fill in ranks that don't exist in all classifications
@@ -423,39 +490,13 @@ sendsketch_taxonomy_parsed <- function(path, as_table = TRUE, remove_ranks = FAL
         out[colnames(part)] <- part
         return(out)
       }))
-      
-      # Remove columns not shared by all samples
-      if (only_shared) {
-        col_has_na <- apply(output, MARGIN = 2, function(col) any(is.na(col)))
-        output <- output[, ! col_has_na]
-      }
-      
-      # Add back on to input data
-      if (append) {
-        output <- cbind(table, output)
-      }
-      
-      tibble::as_tibble(output)
-    })
-    output <- postprocess_table_list(output, simplify = simplify)
-  } else {
-    output <- lapply(sendsketch_data, function(table) {
-      classifications <- table$taxonomy
-      if (remove_ranks) {
-        classifications <- gsub(classifications, pattern = ';?[a-z]+:', replacement = ';')
-        classifications <- gsub(classifications, pattern = '^;', replacement = '')
-      }
-      names(classifications) <- table$sample_id
-      classifications[! duplicated(paste0(classifications, names(classifications)))]
-    })
-    if (simplify) {
-      out_names <- unlist(lapply(output, names), use.names = FALSE)
-      output <- unlist(output, use.names = FALSE)
-      names(output) <- out_names
+    } else {
+      output <- do.call(rbind, table_class_data)
     }
+    tibble::as_tibble(output)
   }
-
-  return(output)
+  
+  postprocess_table_list(lapply(sendsketch_data, process_one), simplify = simplify)
 }
 
 
