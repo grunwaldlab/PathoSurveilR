@@ -4,22 +4,13 @@
 \alias{considered_ref_meta_parsed}
 \title{Find and parse NCBI reference metadata}
 \usage{
-considered_ref_meta_parsed(
-  path = NULL,
-  family = NULL,
-  json_path = NULL,
-  simplify = TRUE
-)
+considered_ref_meta_parsed(path = NULL, taxon_id = NULL, simplify = TRUE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain pathogensurveillance
 output.}
 
-\item{family}{The names of families to return data for.}
-
-\item{json_path}{Path to one or more JSON files containing reference metadata
-to parse. It is assumed that these files are named by families. This is an
-alternative input to the \code{path} parameter and both can not be used at once.}
+\item{taxon_id}{The NCBI taxon IDs of families to return data for.}
 
 \item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
 output folder the data was found in. If \code{TRUE}, all data is combined into a

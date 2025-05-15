@@ -755,115 +755,52 @@ variant_align_parsed <- function(path, rename = TRUE, simplify = TRUE) {
 #'
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output.
-#' @param family The names of families to return data for.
-#' @param json_path Path to one or more JSON files containing reference metadata
-#'   to parse. It is assumed that these files are named by families. This is an
-#'   alternative input to the `path` parameter and both can not be used at once.
+#' @param taxon_id The NCBI taxon IDs of families to return data for.
 #' @inheritParams postprocess_table_list
 #'
 #' @return A table of reference metadata
 #' 
 #' @export
-considered_ref_meta_parsed <- function(path = NULL, family = NULL, json_path = NULL, simplify = TRUE) {
+considered_ref_meta_parsed <- function(path = NULL, taxon_id = NULL, simplify = TRUE) {
   # Check input type parameters
-  if (sum(c(is.null(json_path), is.null(path))) != 1) {
-    stop('Either the `path` or `json_path` parameters must be used but not both')
-  }
-  if (! is.null(json_path) && is.null(family)) {
-    warning('The `family` parameter has no effect when the `json_path` parameter is used for input.')
+  if (! is.null(taxon_id) && ! is.character(taxon_id)) {
+    stop('The argument `taxon_id` must be a character vector')
   }
   
-  # Find data on input files and filter by 'family' argument
-  if (is.null(json_path)) {
-    path_data <- considered_ref_meta_path_data(path)
-    if (is.null(family)) {
-      family <- path_data$family
-    } else {
-      if (! is.character(family)) {
-        stop('The argument `family` must be a character vector')
-      }
-      invalid_families <- family[! family %in% path_data$family]
-      if (length(invalid_families) > 0) {
-        stop(paste0(
-          'The argument `family` contains families not found in the input data:\n  ',
-          paste0(invalid_families, collapse = ', '), '\n',
-          'Data was found for the following families:\n  ',
-          paste0(path_data$family, collapse = ', '), '\n'
-        ))
-      }
-    }
-    json_path <- path_data$path[match(family, path_data$family)]
-  } else {
-    family <- gsub(basename(json_paths), pattern = '.json', replacement = '', fixed = TRUE)
+  # Find data on input files and filter by 'taxon_id' argument
+  all_path_data <- considered_ref_meta_path_data(path, simplify = FALSE)
+  if (! is.null(taxon_id)) {
+    all_path_data <- lapply(all_path_data, function(x) x[x$taxon_id %in% taxon_id, , drop = FALSE])
   }
   
-  # Parse JSON files into a table
-  json_data <- lapply(seq_along(json_path), function(index) {
-    parsed_json <- RcppSimdJson::fparse(readLines(json_path[index]), always_list = TRUE)
-    output <- do.call(rbind, lapply(parsed_json, function(assem_data) {
-      attributes <- assem_data$assembly_info$biosample$attributes
-      hosts <- paste0(attributes$value[attributes$name == 'host'], collapse = ';')
-      data_parts <- list(
-        reference_id = gsub(assem_data$accession, pattern = '[\\/:*?"<>| .]', replacement = '_'),
-        accession = assem_data$accession,
-        assembly_level = assem_data$assembly_info$assembly_level,
-        assembly_status = assem_data$assembly_info$assembly_status,
-        assembly_type = assem_data$assembly_info$assembly_type,
-        hosts = ifelse(hosts == '', NA_character_, hosts),
-        organism_name = gsub(assem_data$organism$organism_name, pattern = '\\[|\\]', replacement = ''),
-        tax_id = as.character(assem_data$organism$tax_id),
-        contig_l50 = as.numeric(assem_data$assembly_stats$contig_l50),
-        contig_n50 = as.numeric(assem_data$assembly_stats$contig_n50),
-        coverage = as.numeric(sub(assem_data$assembly_stats$genome_coverage, pattern = 'x$', replacement = '')),
-        number_of_component_sequences = as.numeric(assem_data$assembly_stats$number_of_component_sequences),
-        number_of_contigs = as.numeric(assem_data$assembly_stats$number_of_contigs),
-        total_ungapped_length = as.numeric(assem_data$assembly_stats$total_ungapped_length),
-        total_sequence_length = as.numeric(assem_data$assembly_stats$total_sequence_length),
-        source_database = assem_data$source_database,
-        is_type = "type_material" %in% names(assem_data),
-        is_annotated = "annotation_info" %in% names(assem_data),
-        is_atypical = "atypical" %in% names(assem_data$assembly_info),
-        checkm_completeness = assem_data$checkm_info$completeness,
-        checkm_contamination = assem_data$checkm_info$contamination
-      )
-      data_parts[sapply(data_parts, length) == 0 | sapply(data_parts, is.null)] <- NA
-      as.data.frame(data_parts)
+  output <- lapply(all_path_data, function(path_data) {
+    assem_data <- do.call(rbind, lapply(path_data$path, function(path) {
+      out <- read.table(path, header = TRUE, sep = '\t', comment.char = '')
+      family_id <- gsub(basename(path), pattern = '.tsv', replacement = '', fixed = TRUE)
+      if (nrow(out) > 0) {
+        out$family_id <- family_id
+      }
+      return(out)
     }))
-    if (!is.null(output)) {
-      output$family <- rep(family[index], nrow(output))
-      output$genus <- gsub(output$organism_name, pattern = '([a-zA-Z0-9.]+) (.*)', replacement = '\\1')
-      output$species <- gsub(output$organism_name, pattern = '([a-zA-Z0-9.]+) ([a-zA-Z0-9.]+) (.*)', replacement = '\\1 \\2')
-    }
-    return(output)
+    
+    # Ensure correct column types
+    assem_data$tax_id <- as.character(assem_data$tax_id)
+    
+    # Add taxon info columns
+    assem_data$organism_name <- gsub(assem_data$organism_name, pattern = '[', replacement = '', fixed = TRUE)
+    assem_data$organism_name <- gsub(assem_data$organism_name, pattern = ']', replacement = '', fixed = TRUE)
+    genus_prefixes <- c('Candidatus')
+    genus_prefix_pattern <- paste0(genus_prefixes, collapse = '|')
+    binomial_pattern <- paste0('^((?:', genus_prefix_pattern, ')?) ?([a-zA-Z0-9.]+) ?([a-zA-Z0-9.]+) ?(.*)$')
+    assem_data$species <- trimws(gsub(assem_data$organism_name, pattern = binomial_pattern, replacement = '\\1 \\2 \\3', ignore.case = TRUE))
+    assem_data$genus <- trimws(gsub(assem_data$organism_name, pattern = binomial_pattern, replacement = '\\1 \\2', ignore.case = TRUE))
+    assem_data$is_refseq <- assem_data$source_database == 'SOURCE_DATABASE_REFSEQ'
+    assem_data$is_binomial <- is_latin_binomial(assem_data$species)
+    assem_data$assembly_level <- factor(assem_data$assembly_level, ordered = TRUE,
+                                        levels = c("Contig", "Scaffold", "Chromosome", "Complete Genome"))
+    
+    tibble::as_tibble(assem_data)
   })
-  assem_data <- do.call(rbind, json_data)
-  if (is.null(assem_data)) {
-    assem_data <- data.frame(
-      reference_id = character(0),
-      accession = character(0),
-      assembly_level = character(0),
-      assembly_status = character(0),
-      assembly_type = character(0),
-      hosts = character(0),
-      organism_name = character(0),
-      tax_id = character(0),
-      contig_l50 = numeric(0),
-      contig_n50 = numeric(0),
-      coverage = numeric(0),
-      number_of_component_sequences = numeric(0),
-      number_of_contigs = numeric(0),
-      total_ungapped_length = numeric(0),
-      total_sequence_length = numeric(0),
-      source_database = character(0),
-      is_type = logical(0),
-      is_annotated = logical(0),
-      is_atypical = logical(0),
-      checkm_completeness = numeric(0),
-      checkm_contamination = numeric(0),
-      family = character(0),
-      genus = character(0),
-      species = character(0)
-    )
-  }
-  return(tibble::as_tibble(assem_data))
+  
+  postprocess_table_list(output, simplify = simplify)
 }

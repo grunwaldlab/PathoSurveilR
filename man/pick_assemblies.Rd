@@ -11,12 +11,13 @@ pick_assemblies(
   rank = NULL,
   subtaxon_count = 5,
   assembly_count = 1,
-  rank_col = c("kingdom", "phylum", "class", "order", "family", "genus", "species",
-    "name"),
-  criteria = c("is_typical", "is_type", "is_refseq", "is_binomial", "is_annotated",
-    "assembly_level", "completeness", "-contamination", "contig_l50", "coverage"),
+  rank_col = c("family", "genus", "species", "organism_name"),
+  criteria = c("-is_atypical", "is_type", "is_refseq", "is_binomial", "is_annotated",
+    "assembly_level", "checkm_completeness", "-checkm_contamination", "-contig_l50",
+    "coverage"),
   allow_ambiguous = TRUE,
-  allow_atypical = TRUE
+  allow_atypical = TRUE,
+  simplify = TRUE
 )
 }
 \arguments{
@@ -78,4 +79,3 @@ A copy of \code{metadata} with additional columns \code{selected},
 Pick assemblies to provide context for one or more taxa. For each taxon
 supplied, representative
 }
-\keyword{internal}

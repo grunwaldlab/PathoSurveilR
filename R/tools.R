@@ -434,3 +434,64 @@ postprocess_table_list <- function(table_list, simplify) {
 make_empty_data_frame <- function(cols) {
   data.frame(matrix(vector(), 0, length(cols), dimnames=list(c(), cols)))
 }
+
+
+#' Sort a table by columns, reversing when prefixed with "-"
+#' 
+#' @keywords internal
+sort_df_by_columns <- function(df, cols) {
+  # Parse parameters
+  if (! is.data.frame(df)) {
+    stop("`df` must be a data frame")
+  }
+  if (! is.character(cols)) {
+    stop("`cols` must be a character vector")
+  }
+  is_reversed <- grepl("^-", cols)
+  cols <- sub("^-", "", cols)
+  invalid_cols <- cols[! cols %in% colnames(df)]
+  if (length(invalid_cols) > 0) {
+    stop(call. = FALSE, "The following `cols` are not in `df`:\n    ", paste0(invalid_cols, collapse = ', '))
+  }
+  
+  # Perform the sorting
+  sort_proxies <- lapply(seq_along(cols), function(i) {
+    ifelse(is_reversed[i], 1, -1) * xtfrm(df[[cols[i]]])
+  })
+  df[do.call(order, sort_proxies), , drop = FALSE]
+}
+
+
+#' @keywords internal
+is_ambiguous_taxon <- function(x) {
+  ambiguous_words <- c(
+    'uncultured',
+    'unknown',
+    'incertae sedis',
+    'sp\\.',
+    'cf\\.',
+    'endosymbiont',
+    'symbiont'
+  )
+  ambiguous_pattern <- paste0('\\b', ambiguous_words, '\\b', collapse = '|')
+  grepl(x, pattern = ambiguous_pattern, ignore.case = TRUE)
+}
+
+
+#' @keywords internal
+is_latin_binomial <- function(x) {
+  grepl(x, pattern = '^[a-zA-Z]+ [a-zA-Z]+($| ).*$') & ! is_ambiguous_taxon(x)
+}
+
+#' Parse "count" arguments which can be a number or a percentage
+#' @keywords internal
+get_count <- function(n_choices, count) {
+  if (grepl(count, pattern = "%$")) {
+    prop <- as.numeric(sub(count, pattern = "%", replacement = "")) / 100
+    count <- ceiling(n_choices * prop)
+    return(min(c(n_choices, count)))
+  } else {
+    count <- as.numeric(count)
+    return(min(c(n_choices, count)))
+  }
+}
