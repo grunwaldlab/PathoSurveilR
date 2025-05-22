@@ -597,36 +597,102 @@ find_path_in_output_directory <- function(path, subpath, pattern) {
 }
 
 
-#' Find subfolders with report group results
+#' #' Find subfolders with report group results
+#' #'
+#' #' For one or more paths, return the paths of subfolders (or the given folders)
+#' #' that are the report group output of a pathogensurviellance run.
+#' #'
+#' #' @keywords internal
+#' find_report_input_result_path <- function(path) {
+#'   subdir_paths <- list.dirs(path)
+#'   is_valid_dir <- function(p) {
+#'     group_id_path <- file.path(p, 'pathogensurveillance_run_info.yml')
+#'     return(file.exists(group_id_path))
+#'   }
+#'   subdir_paths <- subdir_paths[unlist(lapply(subdir_paths, is_valid_dir))]
+#'   return(unique(subdir_paths))
+#' }
+
+
+#' Find the first directory containing pathogensurveillance output
 #'
-#' For one or more paths, return the paths of subfolders (or the given folders)
-#' that are the report group output of a pathogensurviellance run.
+#' Recursively searches a directory to find the first directory (starting with
+#' the input directory) that contains a file called
+#' '.pathogensurveillance_output.yml'.
 #'
-#' @keywords internal
-find_report_input_result_path <- function(path) {
-  subdir_paths <- list.dirs(path)
-  is_valid_dir <- function(p) {
-    group_id_path <- file.path(p, 'pathogensurveillance_run_info.yml')
-    return(file.exists(group_id_path))
+#' @param path `character`. The starting paths to search. Defaults to current
+#'   directory.
+#' @param allow_nested `logical`. If `FALSE`, don't search subdirectories of
+#'   directories that already contain the target file. If `TRUE`, continue
+#'   searching all subdirectories.
+#'
+#' @return `character` vector of paths to directories containing the target
+#'   file.
+#'
+#' @examples
+#' \dontrun{
+#' # Search current directory and subdirectories (non-nested)
+#' find_output_dirs()
+#'
+#' # Search a specific path with nested searching allowed
+#' find_output_dirs("~/projects", allow_nested = TRUE)
+#' }
+#'
+#' @export
+find_output_dirs <- function(path = ".", allow_nested = FALSE) {
+  # Normalize the path
+  path <- normalizePath(path, mustWork = TRUE)
+  
+  # Internal recursive function that accumulates results
+  recursive_search <- function(current_path) {
+    # Check if target file exists in current directory
+    if (is_output_directory(current_path)) {
+      found <- current_path
+      
+      # If we're not allowing nested searches, return immediately
+      if (!allow_nested) {
+        return(found)
+      }
+    } else {
+      found <- character(0)
+    }
+    
+    # Search each subdirectory
+    dirs <- list.dirs(current_path, full.names = TRUE, recursive = FALSE)
+    for (dir in dirs) {
+      subdir_results <- .search_dir(dir)
+      found <- c(found, subdir_results)
+    }
+    
+    return(found)
   }
-  subdir_paths <- subdir_paths[unlist(lapply(subdir_paths, is_valid_dir))]
-  return(unique(subdir_paths))
+  
+  # Recursively search all input paths and combine the results
+  unlist(lapply(path, recursive_search))
 }
 
 
-#' Find pipeline output directory paths
-#'
-#' For one or more paths, return the paths of subfolders (or the given folders)
-#' that are the entire output of a pathogensurviellance run.
-#'
 #' @keywords internal
-find_output_directory_path <- function(path) {
-  subdir_paths <- list.dirs(path)
-  is_valid_dir <- function(p) {
-    pipeline_yml_path <- file.path(p, 'pipeline_info', 'nf_core_pipeline_software_mqc_versions.yml')
-    file.exists(pipeline_yml_path) && any(grepl(readLines(pipeline_yml_path), pattern = 'pathogensurveillance'))
-  }
-  subdir_paths <- subdir_paths[unlist(lapply(subdir_paths, is_valid_dir))]
-  return(unique(subdir_paths))
+is_output_directory <- function(path) {
+  pipeline_yml_path <- file.path(path, '.pathogensurveillance_output.yml')
+  file.exists(pipeline_yml_path)
+}
+
+
+#' @keywords internal
+find_path <- function(outdir_path, target) {
+  yaml::read_yaml()
+}
+
+
+parse_output_meta_yml(path) {
+  raw_results <- yaml::read_yaml(path)
+  lapply(raw_results$outputs, function(x) {
+    if ('description' %in% names(x)) {
+      return(data.frame(
+        
+      ))
+    }
+  })
 }
 

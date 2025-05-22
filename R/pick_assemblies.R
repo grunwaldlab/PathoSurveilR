@@ -51,12 +51,8 @@ pick_assemblies <- function(
     allow_atypical = TRUE,
     simplify = TRUE
 ) {
-  if (is.null(path)) {
-    stop('not implemented')
-  } else {
-    all_assem_data <- considered_ref_meta_parsed(path, simplify = FALSE)
-    all_taxa_found <- sendsketch_taxa_present(path, simplify = FALSE)
-  }
+  all_assem_data <- considered_ref_meta_parsed(path, simplify = FALSE)
+  all_taxa_found <- sendsketch_taxa_present(path, simplify = FALSE)
   
   output <- lapply(names(all_assem_data), function(outdir_path) {
     assem_data <- all_assem_data[[outdir_path]]
