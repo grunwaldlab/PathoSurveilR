@@ -7,9 +7,6 @@
 make_path_data_with_group(path, path_func, regex, id_types, sep = "_")
 }
 \arguments{
-\item{path}{One or more paths to search for pathogensurveillance output,
-either entire output directories or report input directories.}
-
 \item{path_func}{A path finder function that returns a list of paths}
 
 \item{regex}{A regular expression with a single capture group that matches

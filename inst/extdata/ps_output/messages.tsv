@@ -1,8 +1,0 @@
-sample_id	reference_id	workflow	level	message
-LM1	GCF_000014445_1	VARIANT_ANALYSIS	WARNING	Sample is excluded from variant calling analysis because there are too few samples aligned to this reference to make a tree.
-FF1	GCF_001457635_1	VARIANT_ANALYSIS	WARNING	Sample is excluded from variant calling analysis because there are too few samples aligned to this reference to make a tree.
-LW1	GCF_900187315_1	VARIANT_ANALYSIS	WARNING	Sample is excluded from variant calling analysis because there are too few samples aligned to this reference to make a tree.
-LM1	NA	FAKE_PART	WARNING	Some placeholder for a problem
-FF1	NA	FAKE_PART	WARNING	Some placeholder for a problem
-LW1	NA	also not real	NOTE	Not quites as bad of a problem, but good to know!
-LW1	NA	also not real	ERROR	Big problem!

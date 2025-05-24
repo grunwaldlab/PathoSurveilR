@@ -1,7 +1,0 @@
-ref_id	ref_name	ref_description	ref_path	ref_ncbi_accession	ref_ncbi_query	ref_ncbi_query_max	ref_primary_usage	ref_contextual_usage	ref_color_by
-GCF_900187315_1	Listeria welshimeri	Listeria welshimeri (GCF_900187315.1; T; RS)		GCF_900187315.1			optional	optional	
-GCF_003534205_1	Listeria weihenstephanensis	Listeria weihenstephanensis (GCF_003534205.1; T; RS)		GCF_003534205.1			optional	optional	
-GCF_900637745_1	Listeria ivanovii subsp. londoniensis	Listeria ivanovii (GCF_900637745.1; T; RS)		GCF_900637745.1			optional	optional	
-GCF_900187225_1	Listeria monocytogenes	Listeria monocytogenes (GCF_900187225.1; T; RS)		GCF_900187225.1			optional	optional	
-GCF_036884295_1	Brochothrix thermosphacta DSM 20171 = FSL F6-1036	Brochothrix thermosphacta (GCF_036884295.1; T; RS)		GCF_036884295.1			optional	optional	
-GCF_000766055_1	Listeriaceae bacterium FSL A5-0209	Listeriaceae bacterium (GCF_000766055.1; RS)		GCF_000766055.1			optional	optional	

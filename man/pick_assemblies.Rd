@@ -6,9 +6,6 @@
 \usage{
 pick_assemblies(
   path = NULL,
-  metadata = NULL,
-  taxon = NULL,
-  rank = NULL,
   subtaxon_count = 5,
   assembly_count = 1,
   rank_col = c("family", "genus", "species", "organism_name"),
@@ -24,18 +21,6 @@ pick_assemblies(
 \item{path}{The path to one or more folders that contain pathogensurveillance
 output. The needed files will be automatically found. Alternatively, the
 \code{metadata} and \code{taxon} parameters can be used.}
-
-\item{metadata}{\code{data.frame}/\code{tibble}: Metadata on assemblies that can be
-chosen. This is an alternative to the path \code{path} input.}
-
-\item{taxon}{\code{character} vector: One or more taxa to find assemblies for.
-This is an alternative to the \code{path} input.}
-
-\item{rank}{\code{character} vector: The rank corresponding to each value in the
-\code{taxon} argument. Generally not needed but can be used to avoid unexpected
-behavior from the same taxon name being used in multiple ranks. Must be
-composed of values present in \code{rank_col}. If not supplied, taxon names
-appearing in multiple ranks will be treated as different taxa.}
 
 \item{subtaxon_count}{\code{integer}/\code{character} vector: The number or percentage
 (i.e., a \code{character} ending with \verb{\%}) of taxa to get assemblies for one
@@ -70,6 +55,10 @@ elements should be sorted in order of decreasing importance.}
 
 \item{allow_atypical}{Allow assemblies with numbers or unusual characters in
 taxon names.}
+
+\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
+output folder the data was found in. If \code{TRUE}, all data is combined into a
+single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 }
 \value{
 A copy of \code{metadata} with additional columns \code{selected},

@@ -1,9 +1,0 @@
-ref_id	ref_name	ref_description	ref_path	ref_ncbi_accession	ref_ncbi_query	ref_ncbi_query_max	ref_primary_usage	ref_contextual_usage	ref_color_by
-GCF_000621645_1	Vibrio cholerae ATCC 14035	Vibrio cholerae (GCF_000621645.1; T; RS)		GCF_000621645.1			optional	optional	
-GCF_000696385_1	Vibrio metoecus	Vibrio metoecus (GCF_000696385.1; T; RS)		GCF_000696385.1			optional	optional	
-GCF_019977755_1	Vibrio penaeicida	Vibrio penaeicida (GCF_019977755.1; T; RS)		GCF_019977755.1			optional	optional	
-GCF_024347135_1	Vibrio spartinae	Vibrio spartinae (GCF_024347135.1; T; RS)		GCF_024347135.1			optional	optional	
-GCF_024346755_1	Vibrio aerogenes	Vibrio aerogenes (GCF_024346755.1; T; RS)		GCF_024346755.1			optional	optional	
-GCF_000940995_1	Photobacterium gaetbulicola Gung47	Photobacterium gaetbulicola (GCF_000940995.1; T; RS)		GCF_000940995.1			optional	optional	
-GCF_023746615_1	Grimontia kaedaensis	Grimontia kaedaensis (GCF_023746615.1; T; RS)		GCF_023746615.1			optional	optional	
-GCF_019703835_1	Thaumasiovibrio subtropicus	Thaumasiovibrio subtropicus (GCF_019703835.1; T; RS)		GCF_019703835.1			optional	optional	
