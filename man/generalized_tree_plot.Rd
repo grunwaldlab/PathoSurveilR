@@ -4,20 +4,11 @@
 \alias{generalized_tree_plot}
 \title{Plot generic phylogeny}
 \usage{
-generalized_tree_plot(
-  path,
-  parser,
-  collapse_by_tax = NULL,
-  interactive = FALSE
-)
+generalized_tree_plot(path, trees, collapse_by_tax = NULL, interactive = FALSE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output or paths to tree files.}
-
-\item{parser}{A function that takes directory paths as input and returns
-parsed trees found in those directories, such as
-\code{\link[=core_tree_parsed]{core_tree_parsed()}}.}
 
 \item{collapse_by_tax}{A \code{\link[base:character]{base::character()}} vector of taxonomic
 classifications, each delimited by \verb{;}, and named by sample or reference

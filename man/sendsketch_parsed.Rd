@@ -43,13 +43,8 @@ sendsketch_parsed(path)
 }
 \seealso{
 Other parsers: 
-\code{\link{busco_tree_parsed}()},
-\code{\link{core_tree_parsed}()},
-\code{\link{multigene_tree_parsed}()},
 \code{\link{sendsketch_taxa_present}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
-\code{\link{software_version_parsed}()},
-\code{\link{tree_parsed}()},
 \code{\link{variant_align_parsed}()},
 \code{\link{variant_tree_parsed}()}
 }

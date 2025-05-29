@@ -4,20 +4,11 @@
 \alias{status_message_parsed_summary}
 \title{Get summary of pipeline status data}
 \usage{
-status_message_parsed_summary(path, simplify = TRUE)
+status_message_parsed_summary(path)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
-
-\item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
-output folder the data was found in. If \code{TRUE}, all data is combined into a
-single \code{\link[tibble:tibble]{tibble::tibble()}}.}
-}
-\value{
-A \code{\link[tibble:tibble]{tibble::tibble()}} with counts of messages attributes if
-\code{simplify = TRUE} or a list of such \code{\link[tibble:tibble]{tibble::tibble()}}s for each output
-directory found if \code{simplify = FALSE}.
 }
 \description{
 Return a \code{\link[tibble:tibble]{tibble::tibble()}} (table) with the numbers of issues encountered by the

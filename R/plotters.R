@@ -73,7 +73,8 @@ busco_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALSE) {
 #'
 #' @export
 multigene_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALSE) {
-  generalized_tree_plot(path, multigene_tree_parsed, collapse_by_tax = collapse_by_tax, interactive = interactive)
+  trees <- find_ps_data(path, target = 'multigene_tree', simplify = FALSE)
+  generalized_tree_plot(path, trees, collapse_by_tax = collapse_by_tax, interactive = interactive)
 }
 
 #' Plot generic phylogeny
@@ -82,9 +83,7 @@ multigene_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALS
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output or paths to tree files.
-#' @param parser A function that takes directory paths as input and returns
-#'   parsed trees found in those directories, such as
-#'   [core_tree_parsed()].
+#' @param trees
 #' @param collapse_by_tax A [base::character()] vector of taxonomic
 #'   classifications, each delimited by `;`, and named by sample or reference
 #'   ids present in `sample_meta` or `ref_meta`. These are used to provide a
@@ -97,16 +96,15 @@ multigene_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALS
 #'   single plot is returned.
 #'
 #' @keywords internal
-generalized_tree_plot <- function(path, parser, collapse_by_tax = NULL, interactive = FALSE) {
+generalized_tree_plot <- function(path, trees, collapse_by_tax = NULL, interactive = FALSE) {
   # If no trees are found, return an empty list
-  trees <- parser(path)
   if (length(trees) == 0) {
     return(list())
   }
 
   # Find and parse needed data
-  sample_meta <- sample_meta_parsed(path)
-  ref_meta <- ref_meta_parsed(path)
+  sample_meta <- find_ps_data(path, target = 'sample_metadata')[[1]]
+  ref_meta <- find_ps_data(path, target = 'reference_metadata')[[1]]
   sendsketch <- sendsketch_taxonomy_data_parsed(path, only_best = TRUE, only_shared = TRUE)
 
   # Find which columns are used to provide colors to the trees, if any

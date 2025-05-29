@@ -4,10 +4,10 @@
 \alias{combine_data_frames}
 \title{Combines multiple data frames}
 \usage{
-combine_data_frames(...)
+combine_data_frames(dfs)
 }
 \arguments{
-\item{...}{One or more data.frames to combine}
+\item{dfs}{A list of data frames}
 }
 \description{
 combines multiple data frames, handling cases where they have different columns by filling missing values with NA

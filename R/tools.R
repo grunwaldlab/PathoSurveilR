@@ -297,7 +297,7 @@ print_figures_with_selector <- function(plot_func, selector, id_prefix, imglist_
 sendsketch_best_hits <- function(sketch_data, sort_columns = c("WKID", "ANI", "Complt"), top_n = 1) {
   order_data <- c(list(decreasing = TRUE), unname(sketch_data[sort_columns]))
   sketch_data <- sketch_data[do.call(order, order_data), , drop = FALSE]
-  split_data <- split(sketch_data, sketch_data[c('sample_id', 'outdir_path')], drop = TRUE)
+  split_data <- split(sketch_data, sketch_data['sample_id'], drop = TRUE)
   final_table <- do.call(rbind, lapply(split_data, function(x) {
     x[seq_len(top_n), , drop = FALSE]
   }))
@@ -311,13 +311,10 @@ sendsketch_best_hits <- function(sketch_data, sort_columns = c("WKID", "ANI", "C
 #' 
 #' combines multiple data frames, handling cases where they have different columns by filling missing values with NA
 #'  
-#' @param ... One or more data.frames to combine
+#' @param dfs A list of data frames
 #'
 #' @keywords internal
-combine_data_frames <- function(...) {
-  # Get all input data frames as a list
-  dfs <- list(...)
-  
+combine_data_frames <- function(dfs) {
   # Check if all inputs are data frames
   if (!all(sapply(dfs, is.data.frame))) {
     stop("All arguments must be data.frames")
@@ -482,6 +479,7 @@ is_ambiguous_taxon <- function(x) {
 is_latin_binomial <- function(x) {
   grepl(x, pattern = '^[a-zA-Z]+ [a-zA-Z]+($| ).*$') & ! is_ambiguous_taxon(x)
 }
+
 
 #' Parse "count" arguments which can be a number or a percentage
 #' @keywords internal
