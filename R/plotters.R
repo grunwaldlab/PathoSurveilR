@@ -1,112 +1,44 @@
-#' Plot core gene phylogeny
-#'
-#' Plot the core gene phylogenies present in the output of a pathogensurveillance
-#' run.
-#'
-#' @param path The path to one or more folders that contain
-#'   pathogensurveillance output or paths to tree files.
-#' @param collapse_by_tax A [base::character()] vector of taxonomic
-#'   classifications, each delimited by `;`, and named by sample or reference
-#'   ids present in `sample_meta` or `ref_meta`. These are used to provide a
-#'   taxonomic tree that functions as a backbone to combine multiple trees into
-#'   a single one. (Default: return a list of plots instead of a single plot)
-#' @param interactive Whether to use an HTML-based interactive format or not
-#'   (default: TRUE)
-#'
-#' @return  A list of plots, unless `collapse_by_tax` is used, in which case a single plot is returned.
-#'
-#' @examples
-#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
-#' core_tree_plot(path)
-#'
-#' @export
-core_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALSE) {
-  generalized_tree_plot(path, core_tree_parsed, collapse_by_tax = collapse_by_tax, interactive = interactive)
-}
-
-#' Plot busco gene phylogeny
-#'
-#' Plot the busco gene phylogenies present in the output of a pathogensurveillance
-#' run.
-#'
-#' @param path The path to one or more folders that contain
-#'   pathogensurveillance output or paths to tree files.
-#' @param collapse_by_tax A [base::character()] vector of taxonomic
-#'   classifications, each delimited by `;`, and named by sample or reference
-#'   ids present in `sample_meta` or `ref_meta`. These are used to provide a
-#'   taxonomic tree that functions as a backbone to combine multiple trees into
-#'   a single one. (Default: return a list of plots instead of a single plot)
-#' @param interactive Whether to use an HTML-based interactive format or not
-#'   (default: TRUE)
-#'
-#' @return  A list of plots, unless `collapse_by_tax` is useded, in which case a single plot is returned.
-#'
-#' @examples
-#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
-#' busco_tree_plot(path)
-#'
-#' @export
-busco_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALSE) {
-  generalized_tree_plot(path, busco_tree_parsed, collapse_by_tax = collapse_by_tax, interactive = interactive)
-}
-
-#' Plot multigene phylogeny
-#'
-#' Plot the any multigene phylogenies present in the output of a pathogensurveillance
-#' run. This includes core gene phylogenies and busco gene phylogenes.
-#'
-#' @param path The path to one or more folders that contain
-#'   pathogensurveillance output or paths to tree files.
-#' @param collapse_by_tax A [base::character()] vector of taxonomic
-#'   classifications, each delimited by `;`, and named by sample or reference
-#'   ids present in `sample_meta` or `ref_meta`. These are used to provide a
-#'   taxonomic tree that functions as a backbone to combine multiple trees into
-#'   a single one. (Default: return a list of plots instead of a single plot)
-#' @param interactive Whether to use an HTML-based interactive format or not
-#'   (default: TRUE)
-#'
-#' @return  A list of plots, unless `collapse_by_tax` is used, in which case a single plot is returned.
-#'
-#' @examples
-#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
-#' multigene_tree_plot(path)
-#'
-#' @export
-multigene_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALSE) {
-  trees <- find_ps_data(path, target = 'multigene_tree', simplify = FALSE)
-  generalized_tree_plot(path, trees, collapse_by_tax = collapse_by_tax, interactive = interactive)
-}
-
 #' Plot generic phylogeny
 #'
 #' Plot phylogenies present in the output of a pathogensurveillance run.
 #'
-#' @param path The path to one or more folders that contain
-#'   pathogensurveillance output or paths to tree files.
-#' @param trees
-#' @param collapse_by_tax A [base::character()] vector of taxonomic
-#'   classifications, each delimited by `;`, and named by sample or reference
-#'   ids present in `sample_meta` or `ref_meta`. These are used to provide a
-#'   taxonomic tree that functions as a backbone to combine multiple trees into
-#'   a single one. (Default: return a list of plots instead of a single plot)
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output or paths to tree files.
+#' @param target The names of one or more output types to search for.
+#' @param tree One or more trees to plot
+#' @param sample_meta The path to sample metadata or the data itself in the form
+#'   of a table.
+#' @param ref_meta The path to reference metadata or the data itself in the form
+#'   of a table.
+#' @param collapse_by_tax If not `NULL` and more that one `tree` is supplied,
+#'   use taxonomy data passed to this option to combine the trees together.
 #' @param interactive Whether to use an HTML-based interactive format or not
 #'   (default: TRUE)
 #'
 #' @return  A list of plots, unless `collapse_by_tax` is used, in which case a
 #'   single plot is returned.
 #'
-#' @keywords internal
-generalized_tree_plot <- function(path, trees, collapse_by_tax = NULL, interactive = FALSE) {
-  # If no trees are found, return an empty list
-  if (length(trees) == 0) {
-    return(list())
-  }
+#' @export
+generalized_tree_plot <- function(path = NULL, target = NULL, tree = NULL,
+                                  sample_meta = NULL, ref_meta = NULL,
+                                  collapse_by_tax = NULL, interactive = FALSE) {
+  # Check that incompatible parameters are not used
+
+  
 
   # Find and parse needed data
-  sample_meta <- find_ps_data(path, target = 'sample_metadata')[[1]]
-  ref_meta <- find_ps_data(path, target = 'reference_metadata')[[1]]
-  sendsketch <- sendsketch_taxonomy_data_parsed(path, only_best = TRUE, only_shared = TRUE)
+  if (! is.null(path)) {
+    sample_meta <- find_ps_data(path, target = 'sample_metadata')[[1]]
+    ref_meta <- find_ps_data(path, target = 'reference_metadata')[[1]]
+    tree <- find_ps_data(path, target = target)
+    collapse_by_tax <- sendsketch_taxonomy_parsed(path, only_best = TRUE, only_shared = TRUE)
+  }
 
+  # If no trees are found, return an empty list
+  if (length(tree) == 0) {
+    return(list())
+  }
+  
   # Find which columns are used to provide colors to the trees, if any
   ids_in_trees <- unique(unlist(lapply(trees, function(t) t$tip.label)))
   color_by_cols <- unique(unlist(strsplit(sample_meta$color_by[sample_meta$sample_id %in% ids_in_trees], split = ';')))
@@ -117,11 +49,11 @@ generalized_tree_plot <- function(path, trees, collapse_by_tax = NULL, interacti
   # Plot one tree for each color_by column
   tree_plots <- lapply(color_by_cols, function(color_by) {
     plot_phylogeny(
-      trees,
+      tree,
       sample_meta,
       ref_meta,
       color_by,
-      sendsketch, # NOTE: A better source for the taxonomy should be found, perhaps based on reference NCBI taxon IDs.
+      collapse_by_tax, 
       interactive = interactive
     )
   })

@@ -4,17 +4,32 @@
 \alias{generalized_tree_plot}
 \title{Plot generic phylogeny}
 \usage{
-generalized_tree_plot(path, trees, collapse_by_tax = NULL, interactive = FALSE)
+generalized_tree_plot(
+  path = NULL,
+  target = NULL,
+  tree = NULL,
+  sample_meta = NULL,
+  ref_meta = NULL,
+  collapse_by_tax = NULL,
+  interactive = FALSE
+)
 }
 \arguments{
-\item{path}{The path to one or more folders that contain
-pathogensurveillance output or paths to tree files.}
+\item{path}{The path to one or more folders that contain pathogensurveillance
+output or paths to tree files.}
 
-\item{collapse_by_tax}{A \code{\link[base:character]{base::character()}} vector of taxonomic
-classifications, each delimited by \verb{;}, and named by sample or reference
-ids present in \code{sample_meta} or \code{ref_meta}. These are used to provide a
-taxonomic tree that functions as a backbone to combine multiple trees into
-a single one. (Default: return a list of plots instead of a single plot)}
+\item{target}{The names of one or more output types to search for.}
+
+\item{tree}{One or more trees to plot}
+
+\item{sample_meta}{The path to sample metadata or the data itself in the form
+of a table.}
+
+\item{ref_meta}{The path to reference metadata or the data itself in the form
+of a table.}
+
+\item{collapse_by_tax}{If not \code{NULL} and more that one \code{tree} is supplied,
+use taxonomy data passed to this option to combine the trees together.}
 
 \item{interactive}{Whether to use an HTML-based interactive format or not
 (default: TRUE)}
@@ -26,4 +41,3 @@ single plot is returned.
 \description{
 Plot phylogenies present in the output of a pathogensurveillance run.
 }
-\keyword{internal}

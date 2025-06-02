@@ -45,6 +45,7 @@ sendsketch_parsed(path)
 Other parsers: 
 \code{\link{sendsketch_taxa_present}()},
 \code{\link{sendsketch_taxonomy_parsed}()},
+\code{\link{software_version_parsed}()},
 \code{\link{variant_align_parsed}()},
 \code{\link{variant_tree_parsed}()}
 }

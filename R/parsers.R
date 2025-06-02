@@ -1,4 +1,280 @@
+#' Get parsed pipeline status data
+#'
+#' Return a [tibble::tibble()] (table) with the status messages produced by the
+#' pathogensuriveillance pipeline. The contents of all status message files
+#' found in the given paths will be combined.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
+#' @inheritParams postprocess_table_list
+#'
+#' @return A [tibble::tibble()] with the messages from all input paths if
+#'   `simplify = TRUE` or a list of such [tibble::tibble()]s for each output
+#'   directory found if `simplify = FALSE`.
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' status_message_parsed(path)
+#'
+#' @export
+status_message_parsed <- function(path, simplify = TRUE) {
+  path_data <- status_message_path_data(path, simplify = FALSE)
+  output <- lapply(path_data, function(table) {
+    if (nrow(table) > 0) {
+      do.call(rbind, lapply(table$path, utils::read.table, sep = '\t', check.names = FALSE, header = TRUE))
+    } else {
+      tibble::tibble(
+        report_id = character(0),
+        sample_id = character(0),
+        reference_id = character(0),
+        workflow = character(0),
+        level = character(0),
+        message = character(0)
+      )
+    }
+  })
+  postprocess_table_list(output, simplify = simplify)
+}
 
+
+#' Get summary of pipeline status data
+#'
+#' Return a [tibble::tibble()] (table) with the numbers of issues encountered by the
+#' pipeline. The contents of all status message files found in the given paths
+#' will be combined.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
+#' @inheritParams postprocess_table_list
+#'
+#' @return A [tibble::tibble()] with counts of messages attributes if
+#'   `simplify = TRUE` or a list of such [tibble::tibble()]s for each output
+#'   directory found if `simplify = FALSE`.
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' status_message_parsed_summary(path)
+#'
+#' @export
+status_message_parsed_summary <- function(path, simplify = TRUE) {
+  message_data <- status_message_parsed(path, simplify = FALSE)
+  output <- lapply(message_data, function(table) {
+    if (nrow(table) == 0) {
+      tibble::tibble(
+        workflow = character(0),
+        errors =  numeric(0),
+        warnings = numeric(0),
+        notes = numeric(0),
+        samples = numeric(0),
+        references = numeric(0),
+        report_groups = numeric(0)
+      )
+    } else {
+      do.call(rbind, lapply(split(table, table$workflow), function(subset) {
+        tibble::tibble(
+          workflow = unique(subset$workflow),
+          errors = sum(subset$level == 'ERROR'),
+          warnings = sum(subset$level == 'WARNING'),
+          notes = sum(subset$level == 'NOTE'),
+          samples = length(unique(subset$sample_id)),
+          references = length(unique(subset$reference_id)),
+          report_groups = length(unique(subset$report_group_id))
+        )
+      }))
+    }
+  })
+  postprocess_table_list(output, simplify = simplify)
+}
+
+
+#' Get parsed sample metadata
+#'
+#' Return a [tibble::tibble()] (table) with sample metadata. The contents of all
+#' sample metadata files found in the given paths will be combined.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
+#' @inheritParams postprocess_table_list
+#'
+#' @return A [tibble::tibble()] with the sample metadata if
+#'   `simplify = TRUE` or a list of such [tibble::tibble()]s for each output
+#'   directory found if `simplify = FALSE`.
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' sample_meta_parsed(path)
+#'
+#' @export
+sample_meta_parsed <- function(path, simplify = TRUE) {
+  metadata_list <- find_ps_data(path, target = 'sample_metadata')
+  do.call(combine_data_frames, metadata_list)
+  # output <- lapply(meta_paths, function(p) {
+  #   x <- do.call(combine_data_frames, lapply(p, utils::read.csv, check.names = FALSE, sep = '\t'))
+  #   x[] <- lapply(x, function(col_data) ifelse(col_data == 'null', NA_character_, col_data))
+  #   tibble::as_tibble(x)
+  # })
+  # postprocess_table_list(output, simplify = simplify)
+}
+
+
+#' Get parsed reference metadata
+#'
+#' Return a [tibble::tibble()] (table) with reference metadata. The contents of
+#' all reference metadata files found in the given paths will be combined. This
+#' only contains data about references used by at least one step of the pipeline.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
+#' @inheritParams postprocess_table_list
+#'
+#' @return A [tibble::tibble()] with the reference metadata if
+#'   `simplify = TRUE` or a list of such [tibble::tibble()]s for each output
+#'   directory found if `simplify = FALSE`.
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' ref_meta_parsed(path)
+#'
+#' @export
+ref_meta_parsed <- function(path, simplify = TRUE) {
+  meta_paths <- ref_meta_path(path, simplify = FALSE)
+  output <- lapply(meta_paths, function(p) {
+    x <- do.call(combine_data_frames, lapply(p, utils::read.csv, check.names = FALSE, sep = '\t'))
+    x[] <- lapply(x, function(col_data) ifelse(col_data == 'null', NA_character_, col_data))
+    tibble::as_tibble(x)
+  })
+  postprocess_table_list(output, simplify = simplify)
+}
+
+
+#' Parse distance matrices
+#'
+#' Parse distance matrices
+#'
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
+#' @param path_func A path finder function
+#' @param simplify If `TRUE`, combine output into a single matrix, filling in
+#'   the gaps with `NA`.
+#' @param ... passed to read.table
+#' @inheritParams combine_matrices
+#' 
+#' @return a `list` of matrices
+#'
+#' @keywords internal
+generic_matrix_parsed <- function(path, path_func, simplify = TRUE, as_edge_list = FALSE, ...) {
+  matrix_paths <- path_func(path, simplify = FALSE)
+  output <- lapply(matrix_paths, function(paths) {
+    matrices <- lapply(paths, function(one_path) {
+      mat <- as.matrix(utils::read.table(one_path, check.names = FALSE, header = TRUE, ...))
+      rownames(mat) <- colnames(mat)
+      mat[mat == 0] <- NA
+      return(mat)
+    })
+    combine_matrices(matrices, as_edge_list = as_edge_list)
+  })
+  names(output) <- matrix_paths
+  
+  if (simplify) {
+    if (as_edge_list) {
+      output <- do.call(rbind, output)
+      output <- unique(output)
+      rownames(output) <- NULL
+    } else {
+      output <- combine_matrices(output, as_edge_list = FALSE)
+    }
+  }
+  
+  return(output)
+}
+
+
+#' Get estimated ANI distance matrix
+#'
+#' Return a list of [base::matrix()] with the estimated pairwise ANI values
+#' calculated by sourmash.
+#'
+#' @inheritParams generic_matrix_parsed
+#' 
+#' @return a `list` of ANI matrices or edge lists depending on the values of `simplify` and `as_edge_list`
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' estimated_ani_matrix_parsed(path)
+#'
+#' @export
+estimated_ani_matrix_parsed <- function(path, simplify = FALSE, as_edge_list = FALSE) {
+  generic_matrix_parsed(path, estimated_ani_matrix_path, simplify = simplify, as_edge_list = as_edge_list, sep = ',')
+}
+
+
+#' Get POCP matrix
+#'
+#' Return a list of [base::matrix()] with the POCP values based on a core
+#' gene analysis using pirate.
+#'
+#' @inheritParams generic_matrix_parsed
+#' 
+#' @return a `list` of ANI matrices or edge lists depending on the values of `simplify` and `as_edge_list`
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' pocp_matrix_parsed(path)
+#'
+#' @export
+pocp_matrix_parsed <- function(path, simplify = FALSE, as_edge_list = FALSE) {
+  generic_matrix_parsed(path, pocp_matrix_path, simplify = simplify, as_edge_list = as_edge_list, sep = '\t')
+}
+
+
+#' Get parsed report groups
+#'
+#' Return a [tibble::tibble()] (table) with report group ID. The groups found in
+#' the given paths will be combined.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
+#' @inheritParams postprocess_table_list
+#'
+#' @return A [base::character()] vector with the groups from all input paths
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' run_info_parsed(path)
+#'
+#' @export
+run_info_parsed <- function(path, simplify = TRUE) {
+  path_data <- run_info_path_data(path, simplify = FALSE)
+  output <- lapply(path_data, function(table) {
+    if (nrow(table) == 0) {
+      tibble::tibble(
+        command_line = character(0),
+        commit_id = character(0),
+        container_engine = character(0),
+        profile = character(0),
+        revision = character(0),
+        run_name = character(0),
+        session_id = character(0),
+        start_time = character(0),
+        nextflow_version = character(0),
+        pipeline_version = character(0)
+      )
+    } else {
+      do.call(rbind, lapply(table$path, function(p) {
+        run_info <- yaml::read_yaml(p, readLines.warn = FALSE)
+        run_info <- lapply(run_info, function(x) {
+          if (is.null(x)) {
+            return(NA_character_)
+          } else {
+            return(paste0(x, collapse = ';'))
+          }
+        })
+        tibble::as_tibble(run_info)
+      }))  
+    }
+  })
+  postprocess_table_list(output, simplify = simplify)
+}
 
 
 #' Get parsed sendsketch results
@@ -14,7 +290,6 @@
 #'   group and sample.
 #' @param update_taxonomy If `TRUE` look up the current taxonomy classification
 #'   using the NCBI taxon ID rather than using the existing one.
-#' @inheritParams sendsketch_path_data
 #' @inheritParams postprocess_table_list
 #'
 #' @return A [tibble::tibble()] with the sendsketch output combined
@@ -80,6 +355,8 @@ sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE, update_
 }
 
 
+#' Lookup classifications using taxon IDs
+#' 
 #' @param match_input If `TRUE`, reduplicate the output to match 1:1 with the input.
 #' @param simplify If `TRUE`, combine list of tibbles into a single tibble
 #' 
@@ -251,6 +528,45 @@ sendsketch_taxa_present <- function(path, ani_thresh = c(species = 95, genus = 9
 }
 
 
+#' Parse Software Version Metadata from YAML File
+#'
+#' Reads a YAML file containing software version information and transforms it
+#' into a tibble. Each software module and program, along with its version, is
+#' extracted and organized.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
+#' @inheritParams postprocess_table_list
+#' @return A [tibble::tibble()] with columns `module`, `program`, and `version`
+#'   detailing the software versions.
+#' @family parsers
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' software_version_parsed(path)
+#'
+#' @export
+software_version_parsed <- function(path, simplify = TRUE) {
+  version_paths <- software_version_path(path, simplify = FALSE)
+  parse_one <- function(version_path) {
+    raw_version_data <- yaml::read_yaml(version_path)
+    version_data <- tibble::tibble(
+      module = rep(names(raw_version_data), vapply(raw_version_data, FUN.VALUE = numeric(1), length)),
+      program = unname(unlist(lapply(raw_version_data, names))),
+      version = unname(unlist(raw_version_data))
+    )
+    return(version_data)
+  }
+  output <- lapply(version_paths, function(p) {
+    unique(do.call(rbind, lapply(p, parse_one)))
+  })
+  output <- postprocess_table_list(output, simplify = simplify)
+  if (simplify) {
+    output <- unique(output)
+  }
+  return(output)
+}
+
 
 #' Get SNP phylogeny
 #'
@@ -288,6 +604,8 @@ variant_tree_parsed <- function(path, rename = TRUE, simplify = TRUE) {
 
   return(trees)
 }
+
+
 
 
 
@@ -337,42 +655,6 @@ variant_align_parsed <- function(path, rename = TRUE, simplify = TRUE) {
 
 
 
-#' Get summary of pipeline status data
-#'
-#' Return a [tibble::tibble()] (table) with the numbers of issues encountered by the
-#' pipeline. The contents of all status message files found in the given paths
-#' will be combined.
-#'
-#' @param path The path to one or more folders that contain
-#'   pathogensurveillance output.
-#'
-#' @export
-summarize_messages <- function(path) {
-  message_data <- find_ps_data(path, target = 'messages', simplify = TRUE)
-  if (nrow(message_data) == 0) {
-    tibble::tibble(
-      workflow = character(0),
-      errors =  numeric(0),
-      warnings = numeric(0),
-      notes = numeric(0),
-      samples = numeric(0),
-      references = numeric(0),
-      report_groups = numeric(0)
-    )
-  } else {
-    do.call(rbind, lapply(split(message_data, message_data$workflow), function(subset) {
-      tibble::tibble(
-        workflow = unique(subset$workflow),
-        errors = sum(subset$level == 'ERROR'),
-        warnings = sum(subset$level == 'WARNING'),
-        notes = sum(subset$level == 'NOTE'),
-        samples = length(unique(subset$sample_id)),
-        references = length(unique(subset$reference_id)),
-        report_groups = length(unique(subset$report_id))
-      )
-    }))
-  }
-}
 
 
 #' Parse pathogensurveillance output files
@@ -484,45 +766,11 @@ parse_sendsketch <- function(path) {
 
 
 #' @keywords internal
-parse_tsv_matrix <- function(path) {
-  mat <- as.matrix(utils::read.table(path, sep = '\t', check.names = FALSE, header = TRUE))
-  rownames(mat) <- colnames(mat)
-  mat[mat == 0] <- NA
-  return(mat)
-}
-
-
-#' @keywords internal
-parse_csv_matrix <- function(path) {
+parse_matrix <- function(path) {
   mat <- as.matrix(utils::read.table(path, sep = ',', check.names = FALSE, header = TRUE))
   rownames(mat) <- colnames(mat)
   mat[mat == 0] <- NA
   return(mat)
-}
-
-
-#' @keywords internal
-parse_run_info <- function(path) {
-  run_info <- yaml::read_yaml(path, readLines.warn = FALSE)
-  run_info <- lapply(run_info, function(x) {
-    if (is.null(x)) {
-      return(NA_character_)
-    } else {
-      return(paste0(x, collapse = ';'))
-    }
-  })
-  tibble::as_tibble(run_info)
-}
-
-
-#' @keywords internal
-parse_version_info <- function(path) {
-  raw_version_data <- yaml::read_yaml(path)
-  tibble::tibble(
-    module = rep(names(raw_version_data), vapply(raw_version_data, FUN.VALUE = numeric(1), length)),
-    program = unname(unlist(lapply(raw_version_data, names))),
-    version = unname(unlist(raw_version_data))
-  )
 }
 
 

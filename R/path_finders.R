@@ -235,7 +235,7 @@ split_path <- function(path) {
 #'
 #' Prints available pipeline output files grouped by type
 #'
-#' @inheritParams known_outputs
+#' @inheritParams known_ps_outputs
 #'
 #' @return Invisibly returns a nested list of categories with their items and descriptions.
 #'   Primarily called for its side effect of printing formatted output to the console.

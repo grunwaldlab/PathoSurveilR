@@ -6,6 +6,12 @@
 \usage{
 print_ps_outputs(outdir_path, exists = FALSE)
 }
+\arguments{
+\item{outdir_path}{The path to an output directory of pathogensurviellance}
+
+\item{exists}{If \code{TRUE}, information is only returned for output type that
+exist, rather than all output type that are known.}
+}
 \value{
 Invisibly returns a nested list of categories with their items and descriptions.
 Primarily called for its side effect of printing formatted output to the console.
