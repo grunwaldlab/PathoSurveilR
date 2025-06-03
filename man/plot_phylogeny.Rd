@@ -28,7 +28,7 @@ only makes sense when \code{collapse_by_tax} is used.}
 
 \item{collapse_by_tax}{A \code{\link[tibble:tibble]{tibble::tibble()}} with the columns \code{sample_id} and
 those named by taxonomic ranks. These are ids present in \code{sample_meta}.
-These are used to provide a taxo`nomic tree that functions as a backbone to
+These are used to provide a taxonomic tree that functions as a backbone to
 combine multiple trees into a single one. (Default: return a list of plots
 instead of a single plot)}
 

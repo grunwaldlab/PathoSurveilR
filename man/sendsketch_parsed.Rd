@@ -8,6 +8,7 @@ sendsketch_parsed(
   path,
   sample_id = NULL,
   only_best = FALSE,
+  only_shared = FALSE,
   update_taxonomy = FALSE,
   simplify = TRUE
 )
@@ -22,8 +23,11 @@ include all samples.}
 \item{only_best}{Only return the best hit for each combination of report
 group and sample.}
 
+\item{only_shared}{If \code{TRUE}, only return the ranks that are present in all
+of the inputs. Only has an effect if \code{update_taxonomy} is \code{TRUE}.}
+
 \item{update_taxonomy}{If \code{TRUE} look up the current taxonomy classification
-using the NCBI taxon ID rather than using the existing one.}
+using the NCBI taxon ID rather than using the existing one and add columns for each rank.}
 
 \item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
 output folder the data was found in. If \code{TRUE}, all data is combined into a
@@ -44,9 +48,6 @@ sendsketch_parsed(path)
 \seealso{
 Other parsers: 
 \code{\link{sendsketch_taxa_present}()},
-\code{\link{sendsketch_taxonomy_parsed}()},
-\code{\link{software_version_parsed}()},
-\code{\link{variant_align_parsed}()},
-\code{\link{variant_tree_parsed}()}
+\code{\link{sendsketch_taxonomy_parsed}()}
 }
 \concept{parsers}

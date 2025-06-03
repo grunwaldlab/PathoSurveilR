@@ -5,13 +5,15 @@
 #' @param path The path to one or more folders that contain pathogensurveillance
 #'   output or paths to tree files.
 #' @param target The names of one or more output types to search for.
-#' @param tree One or more trees to plot
+#' @param tree One or more trees to plot. Only used if `path` is not used.
 #' @param sample_meta The path to sample metadata or the data itself in the form
-#'   of a table.
+#'   of a table. Only used if `path` is not used.
 #' @param ref_meta The path to reference metadata or the data itself in the form
-#'   of a table.
-#' @param collapse_by_tax If not `NULL` and more that one `tree` is supplied,
-#'   use taxonomy data passed to this option to combine the trees together.
+#'   of a table. Only used if `path` is not used.
+#' @param collapse_by_tax A table with taxonomic data encoded as one column per
+#'   rank and a `sample_id` column with the same values present in
+#'   `sample_meta`. Used to combine the trees together based on the smallest shared
+#'   taxonomic tree. Only used if `path` is not used.
 #' @param interactive Whether to use an HTML-based interactive format or not
 #'   (default: TRUE)
 #'
@@ -22,16 +24,19 @@
 generalized_tree_plot <- function(path = NULL, target = NULL, tree = NULL,
                                   sample_meta = NULL, ref_meta = NULL,
                                   collapse_by_tax = NULL, interactive = FALSE) {
-  # Check that incompatible parameters are not used
-
-  
-
   # Find and parse needed data
   if (! is.null(path)) {
-    sample_meta <- find_ps_data(path, target = 'sample_metadata')[[1]]
-    ref_meta <- find_ps_data(path, target = 'reference_metadata')[[1]]
+    sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
+    ref_meta <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
     tree <- find_ps_data(path, target = target)
-    collapse_by_tax <- sendsketch_taxonomy_parsed(path, only_best = TRUE, only_shared = TRUE)
+    collapse_by_tax <- sendsketch_parsed(path, only_best = TRUE, only_shared = TRUE, update_taxonomy = TRUE, simplify = TRUE)
+    rank_cols <- colnames(collapse_by_tax)[39:ncol(collapse_by_tax)]
+    collapse_by_tax <- collapse_by_tax[, c('sample_id', rank_cols), drop = FALSE]
+  } else {
+    # If a single tree is supplied, convert to list
+    if (inherits(tree, "phylo")) {
+      tree <- list(tree)
+    }
   }
 
   # If no trees are found, return an empty list
@@ -39,8 +44,9 @@ generalized_tree_plot <- function(path = NULL, target = NULL, tree = NULL,
     return(list())
   }
   
+
   # Find which columns are used to provide colors to the trees, if any
-  ids_in_trees <- unique(unlist(lapply(trees, function(t) t$tip.label)))
+  ids_in_trees <- unique(unlist(lapply(tree, function(t) t$tip.label)))
   color_by_cols <- unique(unlist(strsplit(sample_meta$color_by[sample_meta$sample_id %in% ids_in_trees], split = ';')))
   color_by_cols <- color_by_cols[!is.na(color_by_cols)]
   color_by_col_names <- c(color_by_cols, 'Default')
@@ -61,62 +67,6 @@ generalized_tree_plot <- function(path = NULL, target = NULL, tree = NULL,
   return(tree_plots)
 }
 
-#' Plot SNP trees
-#'
-#' Plot the SNP trees from the variant analysis present in the output of a pathogensurveillance
-#' run.
-#'
-#' @param path The path to one or more folders that contain
-#'   pathogensurveillance output or paths to tree files.
-#' @param collapse_by_tax A [base::character()] vector of taxonomic
-#'   classifications, each delimited by `;`, and named by sample or reference
-#'   ids present in `sample_meta` or `ref_meta`. These are used to provide a
-#'   taxonomic tree that functions as a backbone to combine multiple trees into
-#'   a single one. (Default: return a list of plots instead of a single plot)
-#' @param interactive Whether to use an HTML-based interactive format or not
-#'   (default: TRUE)
-#'
-#' @return  A list of plots, unless `collapse_by_tax` is used, in which case a single plot is returned.
-#'
-#' @examples
-#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
-#' variant_tree_plot(path)
-#'
-#' @export
-variant_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALSE) {
-  # If no trees are found, return an empty list
-  trees <-  variant_tree_parsed(path)
-  if (length(trees) == 0) {
-    return(list())
-  }
-
-  # Find and parse needed data
-  sample_meta <- sample_meta_parsed(path)
-  ref_meta <- ref_meta_parsed(path)
-  sendsketch <- sendsketch_taxonomy_data_parsed(path, only_best = TRUE, only_shared = TRUE)
-
-  # Find which columns are used to provide colors to the trees, if any
-  ids_in_trees <- unique(unlist(lapply(trees, function(t) t$tip.label)))
-  color_by_cols <- unique(unlist(strsplit(sample_meta$color_by[sample_meta$sample_id %in% ids_in_trees], split = ';')))
-  color_by_cols <- color_by_cols[!is.na(color_by_cols)]
-  color_by_col_names <- c(color_by_cols, 'Default')
-  color_by_cols <- c(as.list(color_by_cols), list(NULL))  # NULL ensures that the default color scheme is also used
-
-  # Plot one tree for each color_by column
-  tree_plots <- lapply(color_by_cols, function(color_by) {
-    plot_phylogeny(
-      trees,
-      sample_meta,
-      ref_meta,
-      color_by,
-      sendsketch, # NOTE: A better source for the taxonomy should be found, perhaps based on reference NCBI taxon IDs.
-      interactive = interactive
-    )
-  })
-  names(tree_plots) <- color_by_col_names
-  return(tree_plots)
-}
-
 
 #' Plot a phylogeny
 #'
@@ -126,7 +76,7 @@ variant_tree_plot <- function(path, collapse_by_tax = NULL, interactive = FALSE)
 #' @param ref_meta A table containing metadata for references in `tree_paths`.
 #' @param collapse_by_tax A [tibble::tibble()] with the columns `sample_id` and
 #'   those named by taxonomic ranks. These are ids present in `sample_meta`.
-#'   These are used to provide a taxo`nomic tree that functions as a backbone to
+#'   These are used to provide a taxonomic tree that functions as a backbone to
 #'   combine multiple trees into a single one. (Default: return a list of plots
 #'   instead of a single plot)
 #' @param color_by The name of the column in the metadata used to color samples.
@@ -148,7 +98,7 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
   if (inherits(trees, "phylo")) {
     trees <- list(trees)
   }
-
+  
   # Combine trees by connecting to the taxonomy-derived tree
   if (is.null(collapse_by_tax) || length(trees) == 1) {
     if (length(trees) == 1) {
@@ -159,6 +109,7 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
   } else {
 
     # If taxonomy does not have at least one conserved rank, then add one
+    colnames(collapse_by_tax) <- gsub(pattern = ' ', replacement = '_', colnames(collapse_by_tax))
     ranks <- colnames(collapse_by_tax)[colnames(collapse_by_tax) != 'sample_id']
     n_unique_taxa <- unlist(lapply(collapse_by_tax[ranks], function(x) length(unique(x))))
     if (! any(n_unique_taxa == 1)) {
@@ -291,10 +242,10 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
 #'
 #' @export
 variant_msn_plot <- function(path, combine = TRUE) {
-  align_data <- variant_align_path_data(path)
-  alignments <- variant_align_parsed(path)
-  sample_data <- sample_meta_parsed(path)
-  ref_data <- ref_meta_parsed(path)
+  align_data <- find_ps_paths(path, target = 'variants_fasta')
+  alignments <- find_ps_data(path, target = 'variants_fasta')
+  sample_data <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
+  ref_data <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
 
   # Find which columns are used to provide colors to the trees, if any
   ids_used <- unique(unlist(lapply(alignments, function(a) {
@@ -312,7 +263,7 @@ variant_msn_plot <- function(path, combine = TRUE) {
   # Plot MSNs
   graphics::plot.new()
   output <- lapply(seq_len(nrow(align_data)), function(i) {
-    align_without_ref <- alignments[[i]][rownames(alignments[[i]]) != align_data$ref_id[i], ]
+    align_without_ref <- alignments[[i]][rownames(alignments[[i]]) != align_data$reference_id[i], ]
     if (is.null(align_without_ref)) {
       return(NULL)
     }
@@ -475,25 +426,20 @@ estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, su
   }
 
   # Find and parse data
-  matrices <- estimated_ani_matrix_parsed(path)
-  sample_meta <- sample_meta_parsed(path)
-  ref_meta <- ref_meta_parsed(path)
-
-  output <- lapply(matrices, function(m) {
-    ref_data_paths <- c(core_ref_path(path), busco_ref_path(path))
-    if (subset & length(ref_data_paths) > 0) {
-      refs_used <- unlist(lapply(ref_data_paths, readLines))
-      refs_used <- colnames(m)[colnames(m) %in% refs_used]
-      samples_used <- colnames(m)[colnames(m) %in% sample_meta$sample_id]
-      ids_used <- c(refs_used, samples_used)
-      m <- m[ids_used, ids_used]
-    }
-    make_heatmap(input_matrix = m, sample_data = sample_meta, ref_data = ref_meta,
-                 interactive = interactive, height = height, width = width, dpi = dpi,
-                 font_size = font_size, max_label_length = max_label_length)
-  })
-
-  return(output)
+  input_matrix <- find_ps_data(path, target = 'ani_matrix_csv', simplify = TRUE)
+  sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
+  ref_meta <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
+  ref_path_data <- find_ps_data(path, target = 'contextual_refs', simplify = TRUE)
+  
+  if (subset & nrow(ref_path_data) > 0) {
+    refs_used <- colnames(input_matrix)[colnames(input_matrix) %in% ref_path_data$reference_id]
+    samples_used <- colnames(input_matrix)[colnames(input_matrix) %in% sample_meta$sample_id]
+    ids_used <- c(refs_used, samples_used)
+    input_matrix <- input_matrix[ids_used, ids_used]
+  }
+  make_heatmap(input_matrix = input_matrix, sample_data = sample_meta, ref_data = ref_meta,
+               interactive = interactive, height = height, width = width, dpi = dpi,
+               font_size = font_size, max_label_length = max_label_length)
 }
 
 
@@ -533,17 +479,13 @@ pocp_heatmap <- function(path, combine = FALSE, interactive = FALSE,
   }
 
   # Find and parse data
-  matrices <- pocp_matrix_parsed(path)
-  sample_meta <- sample_meta_parsed(path)
-  ref_meta <- ref_meta_parsed(path)
-
-  output <- lapply(matrices, function(m) {
-    make_heatmap(input_matrix = m, sample_data = sample_meta, ref_data = ref_meta,
-                 interactive = interactive, height = height, width = width, dpi = dpi,
-                 font_size = font_size, max_label_length = max_label_length)
-  })
-
-  return(output)
+  input_matrix <- find_ps_data(path, target = 'ani_matrix_csv', simplify = TRUE)
+  sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
+  ref_meta <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
+  
+  make_heatmap(input_matrix = input_matrix, sample_data = sample_meta, ref_data = ref_meta,
+               interactive = interactive, height = height, width = width, dpi = dpi,
+               font_size = font_size, max_label_length = max_label_length)
 }
 
 

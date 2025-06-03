@@ -20,8 +20,8 @@ output.}
 \item{sample_id}{One or more sample IDs to parse the results for. Default:
 include all samples.}
 
-\item{only_best}{Only return taxa predicted by the best hit for each
-combination of report group and sample.}
+\item{only_best}{Only return the best hit for each combination of report
+group and sample.}
 
 \item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
 output folder the data was found in. If \code{TRUE}, all data is combined into a
@@ -37,9 +37,6 @@ associated with directory paths containing \code{pathogensurveillance} output.
 \seealso{
 Other parsers: 
 \code{\link{sendsketch_parsed}()},
-\code{\link{sendsketch_taxonomy_parsed}()},
-\code{\link{software_version_parsed}()},
-\code{\link{variant_align_parsed}()},
-\code{\link{variant_tree_parsed}()}
+\code{\link{sendsketch_taxonomy_parsed}()}
 }
 \concept{parsers}

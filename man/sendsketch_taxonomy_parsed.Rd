@@ -5,8 +5,8 @@
 \title{Get parsed sendsketch taxonomy}
 \usage{
 sendsketch_taxonomy_parsed(
-  path,
-  as_table = TRUE,
+  input,
+  ranks_as_cols = TRUE,
   only_shared = FALSE,
   sample_id = NULL,
   only_best = FALSE,
@@ -14,8 +14,11 @@ sendsketch_taxonomy_parsed(
 )
 }
 \arguments{
-\item{path}{The path to one or more folders that contain pathogensurveillance
-output.}
+\item{input}{The path to one or more folders that contain pathogensurveillance
+output or a table in the form of \code{\link[=sendsketch_parsed]{sendsketch_parsed()}} output.}
+
+\item{ranks_as_cols}{If \code{TRUE}, return a table with a column for each rank
+instead of a table with one taxon per row.}
 
 \item{only_shared}{If \code{TRUE}, only return the ranks that are present in all
 of the inputs. Only has an effect if \code{as_table} is \code{TRUE}.}
@@ -30,8 +33,7 @@ group and sample.}
 output folder the data was found in. If \code{TRUE}, all data is combined into a
 single \code{\link[tibble:tibble]{tibble::tibble()}}.}
 
-\item{ranks_as_cols}{If \code{TRUE}, return a table with a column for each rank
-instead of a table with one taxon per row.}
+\item{include_sample_id}{description}
 }
 \value{
 A \code{\link[base:character]{base::character()}} vector of taxonomic classifications, each
@@ -49,9 +51,6 @@ sendsketch_taxonomy_parsed(path)
 \seealso{
 Other parsers: 
 \code{\link{sendsketch_parsed}()},
-\code{\link{sendsketch_taxa_present}()},
-\code{\link{software_version_parsed}()},
-\code{\link{variant_align_parsed}()},
-\code{\link{variant_tree_parsed}()}
+\code{\link{sendsketch_taxa_present}()}
 }
 \concept{parsers}
