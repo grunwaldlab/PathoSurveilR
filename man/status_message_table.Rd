@@ -4,10 +4,10 @@
 \alias{status_message_table}
 \title{Get table of pipeline status data}
 \usage{
-status_message_table(paths, summarize_by = NULL, interactive = FALSE, ...)
+status_message_table(input, summarize_by = NULL, interactive = FALSE, ...)
 }
 \arguments{
-\item{paths}{The path to one or more folders that contain
+\item{input}{The path to one or more folders that contain
 pathogensurveillance output.}
 
 \item{summarize_by}{What variable to summarize results by, if any. Can be one

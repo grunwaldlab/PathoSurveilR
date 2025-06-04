@@ -4,7 +4,7 @@
 \alias{known_ps_outputs}
 \title{Get which outputs are available}
 \usage{
-known_ps_outputs(outdir_path, exists = FALSE)
+known_ps_outputs(outdir_path, exists = TRUE)
 }
 \arguments{
 \item{outdir_path}{The path to an output directory of pathogensurviellance}

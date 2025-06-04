@@ -4,15 +4,15 @@
 \alias{make_best_match_table}
 \title{Print best match table}
 \usage{
-make_best_match_table(pairwise_matrices, sample_data, ref_data)
+make_best_match_table(pairwise_matrix, sample_data, ref_data)
 }
 \arguments{
-\item{pairwise_matrices}{A \code{list} of \code{matrix} with all pairwise comparisons
-between samples and references}
-
 \item{sample_data}{The sample metadata}
 
 \item{ref_data}{The reference metadata}
+
+\item{pairwise_matrices}{A \code{list} of \code{matrix} with all pairwise comparisons
+between samples and references}
 }
 \description{
 Prints a table with the highest value for each sample given a pairwise

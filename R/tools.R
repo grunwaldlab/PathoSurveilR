@@ -493,3 +493,69 @@ get_count <- function(n_choices, count) {
     return(min(c(n_choices, count)))
   }
 }
+
+
+#' Suggest correct option names for potentially misspelled inputs
+#'
+#' @param input The user's input (potentially misspelled option name)
+#' @param options A character vector of valid option names
+#' @param max_suggestions Maximum number of suggestions to return
+#' @param max_dist Maximum allowed edit distance for suggestions
+#' @param ignore_case Whether to ignore case when matching 
+#'
+#' @return A character vector of suggested corrections, or NULL if no close matches found
+#' @keywords internal
+suggest_option <- function(input, options, 
+                           max_suggestions = 5, 
+                           max_dist = 3, 
+                           ignore_case = TRUE,
+                           method = "osa") {
+  
+  # Input validation
+  if (!is.character(input) || length(input) != 1) {
+    stop("input must be a single character string")
+  }
+  
+  if (!is.character(options)) {
+    stop("options must be a character vector")
+  }
+  
+  if (ignore_case) {
+    input <- tolower(input)
+    options_lower <- tolower(options)
+  } else {
+    options_lower <- options
+  }
+  
+  # Check for exact match first
+  if (input %in% options_lower) {
+    if (ignore_case) {
+      return(options[which(options_lower == input)[1]])
+    } else {
+      return(input)
+    }
+  }
+  
+  # Calculate string distances
+  distances <- utils::adist(input, options_lower, 
+                            ignore.case = ignore_case,
+                            partial = FALSE)
+  
+  # Get distances and indices of possible matches
+  dist_vec <- as.vector(distances)
+  candidates <- which(dist_vec <= max_dist)
+  
+  if (length(candidates) == 0) {
+    return(NULL)
+  }
+  
+  # Sort by distance and get top candidates
+  candidate_distances <- dist_vec[candidates]
+  sorted_indices <- candidates[order(candidate_distances)]
+  
+  # Limit number of suggestions
+  n_suggest <- min(length(sorted_indices), max_suggestions)
+  suggestions <- options[sorted_indices[1:n_suggest]]
+  
+  return(suggestions)
+}

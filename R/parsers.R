@@ -299,18 +299,6 @@ sendsketch_taxa_present <- function(path, ani_thresh = c(species = 95, genus = 9
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 #' Parse pathogensurveillance output files
 #'
 #' Parse data for specific pathogensurveillance output files
@@ -367,7 +355,7 @@ find_ps_data <- function(path, target, simplify = FALSE) {
 #' @keywords internal
 combine_tables <- function(tables) {
   # Look up input metadata data to differentiate rows once combined
-  path_data <- find_ps_paths(names(tables), simplify = TRUE)
+  path_data <- find_ps_paths(names(tables), target = NULL, simplify = TRUE, must_exist = FALSE)
   
   # Add input metadata columns to each table
   cols_to_add <- colnames(path_data)[! colnames(path_data) %in% c('path', 'target')]
@@ -427,6 +415,14 @@ parse_matrix_csv <- function(path) {
   return(mat)
 }
 
+#' @keywords internal
+parse_matrix_tsv <- function(path) {
+  mat <- as.matrix(utils::read.table(path, sep = '\t', check.names = FALSE, header = TRUE))
+  rownames(mat) <- colnames(mat)
+  mat[mat == 0] <- NA
+  return(mat)
+}
+
 
 #' @keywords internal
 parse_tree <- function(path) {
@@ -465,8 +461,6 @@ parse_version_info <- function(path) {
     version = unname(unlist(raw_version_data))
   )
 }
-
-
 
 
 #' Find and parse NCBI reference metadata

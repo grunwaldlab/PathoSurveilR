@@ -4,16 +4,16 @@
 \alias{sample_meta_table}
 \title{Print a table of sample metadata}
 \usage{
-sample_meta_table(path, interactive = FALSE, ...)
+sample_meta_table(input, interactive = FALSE, ...)
 }
 \arguments{
-\item{path}{The path to one or more folders that contain
-pathogensurveillance output or a table in the format of the
-\code{\link[=sample_meta_parsed]{sample_meta_parsed()}} output.}
-
 \item{interactive}{Whether to use an HTML-based interactive format or not (default: TRUE)}
 
 \item{...}{Passed to \code{DT::datatable}.}
+
+\item{path}{The path to one or more folders that contain
+pathogensurveillance output or a table in the format of the
+\code{\link[=sample_meta_parsed]{sample_meta_parsed()}} output.}
 }
 \description{
 Selects columns in the sample metadata to print and format the result for

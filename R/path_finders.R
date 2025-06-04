@@ -68,17 +68,21 @@ is_output_directory <- function(path) {
 #' Find paths for specific pathogensurveillance output files and associated
 #' metadata
 #'
-#' @param outdir_path The path to an output directory of pathogensurviellance
-#' @param target The names of one or more output types to search for.
+#' @param outdir_path One or more paths to output directories of specific output
+#'   files of pathogensurviellance
+#' @param target The names of one or more output types to search for. Setting to
+#'   `NULL` causes data for all available paths to be returned.
 #' @param simplify If `TRUE`, combine all of the output found into a single
 #'   table using the `long` option to decide how to format it.
 #' @param long If `TRUE`, put all paths in a single column rather than having
 #'   each target in their own column.
 #' @param all_metadata Include columns for all metadata regarding the discovery
 #'   and parsing of files.
+#' @param must_exist If `TRUE`, an error is generated if the specified target
+#'   does not exist. Otherwise `NULL` is returned for missing `target`s
 #'
 #' @export
-find_ps_paths <- function(path, target = NULL, simplify = TRUE, long = TRUE, all_metadata = FALSE) {
+find_ps_paths <- function(path, target, simplify = TRUE, long = TRUE, all_metadata = FALSE, must_exist = ! is.null(target)) {
   
   all_path_data <- lapply(path, function(one_path) {
     # Search for the first parent path that is a pathogensurveillance output directory
@@ -95,12 +99,14 @@ find_ps_paths <- function(path, target = NULL, simplify = TRUE, long = TRUE, all
     
     # Return data on all available data if target is undefined
     if (is.null(target)) {
-      target <- names(metadata$outputs)
+      my_target <- names(metadata$outputs)
+    } else {
+      my_target <- target
     }
     
     # Search for files
-    path_data <- lapply(target, function(target) {
-      target_meta <- metadata$outputs[[target]]
+    path_data <- lapply(my_target, function(t) {
+      target_meta <- metadata$outputs[[t]]
       do.call(rbind, lapply(target_meta$sources, function(source) {
         source_path <- file.path(outdir_path, source$path)
         possible_paths <- list.files(path = source_path, recursive = TRUE,
@@ -144,18 +150,43 @@ find_ps_paths <- function(path, target = NULL, simplify = TRUE, long = TRUE, all
         tibble::as_tibble(output)
       }))
     })
-    names(path_data) <- target
-    path_data <- path_data[! sapply(path_data, is.null)]
+    names(path_data) <- my_target
     
     # Filter possible paths by original path supplied
     path_data <- lapply(path_data, function(x) {
-      x[startsWith(x$path, one_path), , drop = FALSE]
+      if (is.null(x)) {
+        return(NULL)
+      } else {
+        out <- x[startsWith(x$path, one_path), , drop = FALSE]
+        if (nrow(out) == 0) {
+          return(NULL)
+        } else {
+          return(out)
+        }
+      }
     })
-    path_data <- path_data[sapply(path_data, nrow) > 0]
     
     return(path_data)
   })
   all_path_data <- unlist(all_path_data, recursive = FALSE)
+  
+  # If `target` is specified, error if any targets are not found
+  if (must_exist) {
+    is_missing <- vapply(all_path_data, FUN.VALUE = logical(1), is.null)
+    missing_targets <- names(all_path_data)[is_missing]
+    if (length(missing_targets) > 0) {
+      valid_targets <- known_ps_outputs(outdir_path = path, exists = TRUE)$target
+      suggestions <- unlist(lapply(missing_targets, suggest_option, options = valid_targets))
+      stop(
+        call. = FALSE,
+        'The following targets could not be found:\n  ', paste0('"', missing_targets, '"', collapse = ', '), '\n',
+        ifelse(length(suggestions) == 0, '', paste0('Valid targets with similar names include:\n  ', paste0('"', suggestions, '"', collapse = ', '), '\n')),
+        'To see all valid targets for this output directory use the following:\n',
+        '  print_ps_outputs("', path, '", exists = TRUE)\n' 
+      )
+    }
+  }
+  
 
   # Simplify output to a single table
   if (simplify) {
@@ -204,6 +235,7 @@ get_ps_outdir_from_path <- function(path) {
   # Check all input paths and parent directories
   path_parts <- split_path(path)
   unique_paths <- unique(unlist(path_parts))
+  unique_paths <- unique_paths[order(nchar(unique_paths))]
   is_out_key <- is_output_directory(unique_paths)
   names(is_out_key) <- unique_paths
   
@@ -220,14 +252,19 @@ get_ps_outdir_from_path <- function(path) {
 
 #' @keywords internal
 split_path <- function(path) {
-  lapply(path, function(p) {
-    output <- p
-    while (! p %in% c('/', '.', '..')) {
-      p <- dirname(p)
-      output <- c(output, p)
-    }
-    return(output)
+  lapply(strsplit(path, split = '/'), function(split_path) {
+    vapply(seq_len(length(split_path)), FUN.VALUE = character(1), function(n) {
+      paste0(split_path[1:n], collapse = '/')
+    })
   })
+  # lapply(path, function(p) {
+  #   output <- p
+  #   while (! p %in% c('/', '.', '..')) {
+  #     p <- dirname(p)
+  #     output <- c(output, p)
+  #   }
+  #   return(output)
+  # })
 }
 
 
@@ -241,7 +278,7 @@ split_path <- function(path) {
 #'   Primarily called for its side effect of printing formatted output to the console.
 #'
 #' @export
-print_ps_outputs <- function(outdir_path, exists = FALSE) {
+print_ps_outputs <- function(outdir_path, exists = TRUE) {
   desc_data <- known_ps_outputs(outdir_path, exists = exists)
 
   # Get print text for each line
@@ -276,13 +313,13 @@ print_ps_outputs <- function(outdir_path, exists = FALSE) {
 #'   exist, rather than all output type that are known.
 #'
 #' @export
-known_ps_outputs <- function(outdir_path, exists = FALSE) {
+known_ps_outputs <- function(outdir_path, exists = TRUE) {
   # Load output schema metadata
   metadata <- parse_output_meta_json(outdir_path)
   
   # Filter by output type that have file associated with them
   if (exists) {
-    all_path_data <- find_path_data(outdir_path, simplify = TRUE, long = TRUE)
+    all_path_data <- find_ps_paths(outdir_path, target = NULL, simplify = TRUE, long = TRUE)
     all_output_types <- unique(all_path_data$target)
     metadata$outputs <- metadata$outputs[names(metadata$outputs) %in% all_output_types]
   }

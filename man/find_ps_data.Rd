@@ -7,7 +7,8 @@
 find_ps_data(path, target, simplify = FALSE)
 }
 \arguments{
-\item{target}{The names of one or more output types to search for.}
+\item{target}{The names of one or more output types to search for. Setting to
+\code{NULL} causes data for all available paths to be returned.}
 
 \item{simplify}{If \code{TRUE}, attempt to combine all of the output found into a
 single object instead of returning a list.}

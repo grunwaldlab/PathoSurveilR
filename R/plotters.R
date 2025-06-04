@@ -21,7 +21,7 @@
 #'   single plot is returned.
 #'
 #' @export
-generalized_tree_plot <- function(path = NULL, target = NULL, tree = NULL,
+plot_tree <- function(path = NULL, target = NULL, tree = NULL,
                                   sample_meta = NULL, ref_meta = NULL,
                                   collapse_by_tax = NULL, interactive = FALSE) {
   # Find and parse needed data

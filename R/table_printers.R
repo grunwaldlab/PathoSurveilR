@@ -15,13 +15,17 @@
 #' sample_meta_table(path, interactive = TRUE)
 #'
 #' @export
-sample_meta_table <- function(path, interactive = FALSE, ...) {
+sample_meta_table <- function(input, interactive = FALSE, ...) {
   # Parse the input if it is a file/folder path
-  if (is.data.frame(path)) {
-    sample_data <- path
+  if (inherits(input, 'data.frame')) {
+    sample_data <- input
   } else {
-    sample_data <- sample_meta_parsed(path)
+    sample_data <- find_ps_data(input, target = 'sample_metadata', simplify = TRUE)
   }
+  
+  # Remove unneeded columns
+  cols_to_remove <- c('outdir_path')
+  sample_data <- sample_data[! colnames(sample_data) %in% cols_to_remove]
 
   # Print table
   if (interactive) {
@@ -41,7 +45,7 @@ sample_meta_table <- function(path, interactive = FALSE, ...) {
 #' by the pipeline, one row for each issue. The contents of all status message
 #' files found in the given paths will be combined.
 #'
-#' @param paths The path to one or more folders that contain
+#' @param input The path to one or more folders that contain
 #'   pathogensurveillance output.
 #' @param summarize_by What variable to summarize results by, if any. Can be one
 #'   of `'sample'`, `'message'`, `'workflow'`, or `NULL`. By default, all values
@@ -64,7 +68,7 @@ sample_meta_table <- function(path, interactive = FALSE, ...) {
 #' status_message_table(path, summarize_by = 'message')
 #'
 #' @export
-status_message_table <- function(paths, summarize_by = NULL, interactive = FALSE, ...) {
+status_message_table <- function(input, summarize_by = NULL, interactive = FALSE, ...) {
   # Check parameters
   valid_summarize_by <- c('sample', 'message', 'workflow')
   if (! is.null(summarize_by) && ! summarize_by %in% valid_summarize_by) {
@@ -73,7 +77,7 @@ status_message_table <- function(paths, summarize_by = NULL, interactive = FALSE
   }
 
   # Find and parse message data
-  message_data <- status_message_parsed(paths)
+  message_data <- find_ps_data(input, target = 'messages', simplify = TRUE)
 
   # Make step status column
   symbol_key <- c(
@@ -191,9 +195,9 @@ status_message_table <- function(paths, summarize_by = NULL, interactive = FALSE
 estimated_ani_match_table <- function(path, interactive = FALSE, ...) {
   # Get best match table
   output <- make_best_match_table(
-    pairwise_matrices = estimated_ani_matrix_parsed(path),
-    sample_data = sample_meta_parsed(path),
-    ref_data = ref_meta_parsed(path)
+    pairwise_matrix = find_ps_data(path, target = 'ani_matrix_csv', simplify = TRUE),
+    sample_data = find_ps_data(path, target = 'sample_metadata', simplify = TRUE),
+    ref_data = find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
   )
 
   # Print table
@@ -234,9 +238,9 @@ estimated_ani_match_table <- function(path, interactive = FALSE, ...) {
 pocp_match_table <- function(path, interactive = FALSE, ...) {
   # Get best match table
   output <- make_best_match_table(
-    pairwise_matrices = pocp_matrix_parsed(path),
-    sample_data = sample_meta_parsed(path),
-    ref_data = ref_meta_parsed(path)
+    pairwise_matrix = find_ps_data(path, target = 'ani_matrix_csv', simplify = TRUE),
+    sample_data = find_ps_data(path, target = 'sample_metadata', simplify = TRUE),
+    ref_data = find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
   )
 
   # Print table
@@ -254,6 +258,7 @@ pocp_match_table <- function(path, interactive = FALSE, ...) {
   return(output)
 }
 
+
 #' Print best match table
 #'
 #' Prints a table with the highest value for each sample given a pairwise
@@ -265,43 +270,39 @@ pocp_match_table <- function(path, interactive = FALSE, ...) {
 #' @param ref_data The reference metadata
 #'
 #' @keywords internal
-make_best_match_table <- function(pairwise_matrices, sample_data, ref_data) {
-  output <- do.call(rbind, lapply(pairwise_matrices, function(pairwise_matrix) {
-    sample_ids <- sample_data$sample_id[sample_data$sample_id %in% colnames(pairwise_matrix)]
-    ref_ids <- ref_data$ref_id[ref_data$ref_id %in% colnames(pairwise_matrix)]
-    do.call(rbind, lapply(sample_ids, function(id) { # loop over sample IDs and combine results into a table
-      best_ref_match_name <- NA
-      best_ref_match_value <- NA
-      if (length(ref_ids) >= 1) {
-        ref_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% ref_data$ref_id, drop = FALSE]
-        if (! all(is.na(ref_samp_comp))) {
-          best_ref_match_id <- names(which.max(ref_samp_comp))
-          best_ref_match_value <- unname(unlist(ref_samp_comp[best_ref_match_id]))
-          best_ref_match_name <- ref_data$ref_name[ref_data$ref_id == best_ref_match_id]
-        }
-      } 
-      best_samp_match_name <- NA
-      best_samp_match_value <- NA
-      if (length(sample_ids) > 1) {
-        samp_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% sample_ids & colnames(pairwise_matrix) != id, drop = FALSE]
-        if (! all(is.na(samp_samp_comp))) {
-          best_samp_match_id <- names(which.max(samp_samp_comp))
-          best_samp_match_value <- unname(unlist(samp_samp_comp[best_samp_match_id]))
-          best_samp_match_name <- sample_data$name[sample_data$sample_id == best_samp_match_id]
-        }
-      } 
-      data.frame(
-        check.names = FALSE,
-        sample_name = sample_data$name[sample_data$sample_id == id],
-        best_ref = best_ref_match_name,
-        best_ref_value = best_ref_match_value,
-        best_sample = best_samp_match_name,
-        best_sample_value = best_samp_match_value
-      )
-    }))
+make_best_match_table <- function(pairwise_matrix, sample_data, ref_data) {
+  sample_ids <- sample_data$sample_id[sample_data$sample_id %in% colnames(pairwise_matrix)]
+  ref_ids <- ref_data$ref_id[ref_data$ref_id %in% colnames(pairwise_matrix)]
+  do.call(rbind, lapply(sample_ids, function(id) { # loop over sample IDs and combine results into a table
+    best_ref_match_name <- NA
+    best_ref_match_value <- NA
+    if (length(ref_ids) >= 1) {
+      ref_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% ref_data$ref_id, drop = TRUE]
+      if (! all(is.na(ref_samp_comp))) {
+        best_ref_match_id <- names(which.max(ref_samp_comp))
+        best_ref_match_value <- unname(unlist(ref_samp_comp[best_ref_match_id]))
+        best_ref_match_name <- ref_data$ref_name[ref_data$ref_id == best_ref_match_id]
+      }
+    } 
+    best_samp_match_name <- NA
+    best_samp_match_value <- NA
+    if (length(sample_ids) > 1) {
+      samp_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% sample_ids & colnames(pairwise_matrix) != id, drop = TRUE]
+      if (! all(is.na(samp_samp_comp))) {
+        best_samp_match_id <- names(which.max(samp_samp_comp))
+        best_samp_match_value <- unname(unlist(samp_samp_comp[best_samp_match_id]))
+        best_samp_match_name <- sample_data$name[sample_data$sample_id == best_samp_match_id]
+      }
+    } 
+    data.frame(
+      check.names = FALSE,
+      sample_name = sample_data$name[sample_data$sample_id == id],
+      best_ref = best_ref_match_name,
+      best_ref_value = best_ref_match_value,
+      best_sample = best_samp_match_name,
+      best_sample_value = best_samp_match_value
+    )
   }))
-  rownames(output) <- NULL
-  return(output)
 }
 
 
@@ -381,4 +382,3 @@ sendsketch_table <- function(path, interactive = FALSE) {
     return(print_static_table(final_table))
   }
 }
-

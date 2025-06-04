@@ -6,14 +6,16 @@
 \usage{
 find_ps_paths(
   path,
-  target = NULL,
+  target,
   simplify = TRUE,
   long = TRUE,
-  all_metadata = FALSE
+  all_metadata = FALSE,
+  must_exist = !is.null(target)
 )
 }
 \arguments{
-\item{target}{The names of one or more output types to search for.}
+\item{target}{The names of one or more output types to search for. Setting to
+\code{NULL} causes data for all available paths to be returned.}
 
 \item{simplify}{If \code{TRUE}, combine all of the output found into a single
 table using the \code{long} option to decide how to format it.}
@@ -24,7 +26,11 @@ each target in their own column.}
 \item{all_metadata}{Include columns for all metadata regarding the discovery
 and parsing of files.}
 
-\item{outdir_path}{The path to an output directory of pathogensurviellance}
+\item{must_exist}{If \code{TRUE}, an error is generated if the specified target
+does not exist. Otherwise \code{NULL} is returned for missing \code{target}s}
+
+\item{outdir_path}{One or more paths to output directories of specific output
+files of pathogensurviellance}
 }
 \description{
 Find paths for specific pathogensurveillance output files and associated

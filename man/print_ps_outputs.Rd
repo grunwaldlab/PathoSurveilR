@@ -4,7 +4,7 @@
 \alias{print_ps_outputs}
 \title{Prints available pipeline output files}
 \usage{
-print_ps_outputs(outdir_path, exists = FALSE)
+print_ps_outputs(outdir_path, exists = TRUE)
 }
 \arguments{
 \item{outdir_path}{The path to an output directory of pathogensurviellance}
