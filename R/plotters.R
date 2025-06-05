@@ -47,7 +47,8 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
 
   # Find which columns are used to provide colors to the trees, if any
   ids_in_trees <- unique(unlist(lapply(tree, function(t) t$tip.label)))
-  color_by_cols <- unique(unlist(strsplit(sample_meta$color_by[sample_meta$sample_id %in% ids_in_trees], split = ';')))
+  color_by_text <- as.character(sample_meta$color_by[sample_meta$sample_id %in% ids_in_trees])
+  color_by_cols <- unique(unlist(strsplit(color_by_text, split = ';')))
   color_by_cols <- color_by_cols[!is.na(color_by_cols)]
   color_by_col_names <- c(color_by_cols, 'Default')
   color_by_cols <- c(as.list(color_by_cols), list(NULL))  # NULL ensures that the default color scheme is also used
@@ -255,7 +256,8 @@ variant_msn_plot <- function(path, combine = TRUE) {
       return(rownames(a))
     }
   })))
-  color_by_cols <- unique(unlist(strsplit(sample_data$color_by[sample_data$sample_id %in% ids_used], split = ';')))
+  color_by_text <- as.character(sample_data$color_by[sample_data$sample_id %in% ids_used])
+  color_by_cols <- unique(unlist(strsplit(color_by_text, split = ';')))
   color_by_cols <- color_by_cols[! is.na(color_by_cols)]
   color_by_col_names <- c(color_by_cols, 'Default')
   color_by_cols <- c(as.list(color_by_cols), list(NULL))  # NULL ensures that the default color scheme is also used
