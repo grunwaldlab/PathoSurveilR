@@ -27,7 +27,7 @@ group and sample.}
 of the inputs. Only has an effect if \code{update_taxonomy} is \code{TRUE}.}
 
 \item{update_taxonomy}{If \code{TRUE} look up the current taxonomy classification
-using the NCBI taxon ID rather than using the existing one and add columns for each rank.}
+using the NCBI taxon ID rather than using the existing one.}
 
 \item{simplify}{If \code{FALSE} a list of \code{\link[tibble:tibble]{tibble::tibble()}}s are returned named by the
 output folder the data was found in. If \code{TRUE}, all data is combined into a

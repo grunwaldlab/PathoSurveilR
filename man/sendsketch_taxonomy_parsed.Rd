@@ -8,6 +8,7 @@ sendsketch_taxonomy_parsed(
   input,
   ranks_as_cols = TRUE,
   only_shared = FALSE,
+  update_taxonomy = FALSE,
   sample_id = NULL,
   only_best = FALSE,
   simplify = TRUE
@@ -22,6 +23,9 @@ instead of a table with one taxon per row.}
 
 \item{only_shared}{If \code{TRUE}, only return the ranks that are present in all
 of the inputs. Only has an effect if \code{as_table} is \code{TRUE}.}
+
+\item{update_taxonomy}{If \code{TRUE} look up the current taxonomy classification
+using the NCBI taxon ID rather than using the existing one.}
 
 \item{sample_id}{One or more sample IDs to parse the results for. Default:
 include all samples.}

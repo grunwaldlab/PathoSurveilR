@@ -320,13 +320,20 @@ combine_data_frames <- function(dfs) {
     stop("All arguments must be data.frames")
   }
   
+  # If an empty list is given, return NULL
+  if (length(dfs) == 0) {
+    return(NULL)
+  }
+  
   # Get all unique column names across all data frames
-  all_cols <- unique(unlist(lapply(dfs, names)))
+  all_cols <- unlist(lapply(dfs, colnames))
+  col_index <- unlist(lapply(dfs, function(x) rev(seq_along(x))))
+  unique_cols <- unique(all_cols[order(col_index, decreasing = TRUE)])
   
   # Function to align columns of a single data frame
   align_df <- function(df) {
     # Find missing columns in this df
-    missing_cols <- setdiff(all_cols, names(df))
+    missing_cols <- setdiff(unique_cols, names(df))
     
     # Add missing columns filled with NA
     if (length(missing_cols) > 0) {
@@ -335,8 +342,8 @@ combine_data_frames <- function(dfs) {
       }
     }
     
-    # Reorder columns to match all_cols order
-    df[, all_cols, drop = FALSE]
+    # Reorder columns to match unique_cols order
+    df[, unique_cols, drop = FALSE]
   }
   
   # Apply alignment to all data frames and combine them

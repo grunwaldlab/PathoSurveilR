@@ -59,7 +59,7 @@ status_message_summary <- function(path) {
 #' @param only_shared If `TRUE`, only return the ranks that are present in all
 #'   of the inputs. Only has an effect if `update_taxonomy` is `TRUE`.
 #' @param update_taxonomy If `TRUE` look up the current taxonomy classification
-#'   using the NCBI taxon ID rather than using the existing one and add columns for each rank. 
+#'   using the NCBI taxon ID rather than using the existing one.
 #' @inheritParams postprocess_table_list
 #'
 #' @return A [tibble::tibble()] with the sendsketch output combined
@@ -113,8 +113,8 @@ sendsketch_parsed <- function(path, sample_id = NULL, only_best = FALSE, only_sh
   }
 
   # Look up taxonomy based on taxon ID for most up to date taxonomy
-  if (update_taxonomy && nrow(sketch_data) > 0)  {
-    tax_data <- sendsketch_taxonomy_parsed(input = sketch_data, only_shared = only_shared, simplify = TRUE)
+  if (nrow(sketch_data) > 0)  {
+    tax_data <- sendsketch_taxonomy_parsed(input = sketch_data, only_shared = only_shared, update_taxonomy = update_taxonomy, simplify = TRUE)
     
     # Combine taxonomy data based on taxon ID while preserving column order
     original_columns <- colnames(sketch_data)
@@ -205,7 +205,7 @@ lookup_ncbi_taxon_id_classification <- function(taxon_ids, match_input = TRUE, s
 #' sendsketch_taxonomy_parsed(path)
 #'
 #' @export
-sendsketch_taxonomy_parsed <- function(input, ranks_as_cols = TRUE, only_shared = FALSE,
+sendsketch_taxonomy_parsed <- function(input, ranks_as_cols = TRUE, only_shared = FALSE, update_taxonomy = FALSE,
                                        sample_id = NULL, only_best = FALSE, simplify = TRUE) {
   
   # Used existing data if supplied as a table, otherwise find and parse data based on a path
@@ -216,8 +216,31 @@ sendsketch_taxonomy_parsed <- function(input, ranks_as_cols = TRUE, only_shared 
                                          update_taxonomy = FALSE, simplify = FALSE)
   }
 
-  class_data <- lookup_ncbi_taxon_id_classification(sendsketch_data$TaxID, match_input = FALSE, simplify = FALSE)
+  # Parse or lookup taxonomic classifications
+  if (update_taxonomy) {
+    class_data <- lookup_ncbi_taxon_id_classification(sendsketch_data$TaxID, match_input = FALSE, simplify = FALSE)
+  } else {
+    taxon_regex <- '^([a-z]+):(.+)$'
+    rank_key <- c(
+      sk = 'domain',
+      k = 'kingdom',
+      p = 'phylum',
+      c = 'class',
+      o = 'order',
+      f = 'family',
+      g = 'genus',
+      s = 'species'
+    )
+    class_data <- lapply(strsplit(sendsketch_data$taxonomy, ';'), function(taxa_with_ranks) {
+      tibble::tibble(
+        name = sub(taxa_with_ranks, pattern = taxon_regex, replacement = '\\2'),
+        rank = rank_key[sub(taxa_with_ranks, pattern = taxon_regex, replacement = '\\1')]
+      )
+    })
+    names(class_data) <- sendsketch_data$TaxID
+  }
   
+  # Return an empty dataframe if there are not input values
   if (nrow(sendsketch_data) == 0) {
     if (as_table) {
       return(tibble::as_tibble(make_empty_data_frame(
@@ -242,7 +265,7 @@ sendsketch_taxonomy_parsed <- function(input, ranks_as_cols = TRUE, only_shared 
   }
   
   # Remove ranks that are placeholders for missing ranks
-  placeholder_ranks <- c('clade', 'no rank')
+  placeholder_ranks <- c('clade', 'no rank', NA)
   table_class_data <- lapply(table_class_data, function(x) x[! x$rank %in% placeholder_ranks, , drop = FALSE])
   
   if (ranks_as_cols) {
@@ -254,15 +277,7 @@ sendsketch_taxonomy_parsed <- function(input, ranks_as_cols = TRUE, only_shared 
     })
     
     # Fill in ranks that don't exist in all classifications
-    all_cols <- unlist(lapply(parts, colnames))
-    col_index <- unlist(lapply(parts, function(x) rev(seq_along(x))))
-    unique_cols <- unique(all_cols[order(col_index, decreasing = TRUE)])
-    output <- do.call(rbind, lapply(parts, function(part) {
-      out <- do.call(data.frame, as.list(rep(NA_character_, length(unique_cols))))
-      colnames(out) <- unique_cols
-      out[colnames(part)] <- part
-      return(out)
-    }))
+    output <- combine_data_frames(parts)
   } else {
     output <- do.call(rbind, table_class_data)
   }
