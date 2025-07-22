@@ -189,8 +189,10 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
   node_data <- tibble::tibble(
     newick_label = all_labels,
     node_label = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "", all_labels),
-    branch_color = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "grey", "black"),
-    branch_type = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "dashed", "solid")
+    branch_color = 'black',
+    branch_type = 'solid'
+    # branch_color = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "grey", "black"),
+    # branch_type = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "dashed", "solid")
   )
 
   legend_title <- tools::toTitleCase(trimws(gsub(color_by, pattern = '_', replacement = ' ')))

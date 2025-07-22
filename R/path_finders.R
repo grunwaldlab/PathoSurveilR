@@ -324,14 +324,17 @@ known_ps_outputs <- function(outdir_path, exists = TRUE) {
     metadata$outputs <- metadata$outputs[names(metadata$outputs) %in% all_output_types]
   }
   
-  # Organize outputs by category
-  desc_data <- do.call(rbind, lapply(names(metadata$outputs), function(key) {
-    item <- metadata$outputs[[key]]
-    category <- item$category
-    description <- item$description
-    parser <- item$parser$r
+  desc_data <- do.call(rbind, lapply(names(metadata$outputs), function(output_name) {
+    output <- metadata$outputs[[output_name]]
+    description <- output$description
+    category <- output$category
+    parser <- output$parsers$r
+    combiner <- output$combiners$r
     if (is.null(parser)) {
       parser <- NA_character_
+    }
+    if (is.null(combiner)) {
+      combiner <- NA_character_
     }
     if (is.null(category) || category == "") {
       category <- 'Miscellaneous'
@@ -339,13 +342,53 @@ known_ps_outputs <- function(outdir_path, exists = TRUE) {
     if (is.null(description)) {
       category <- ''
     }
-    data.frame(
-      target = key,
-      description = description,
-      category = category,
-      parser = parser,
-      stringsAsFactors = FALSE
-    )
+    
+    # Process each source in the output
+    sources_df <- do.call(rbind, lapply(output$sources, function(source) {
+      path <- source$path
+      pattern <- source$pattern
+      
+      # Create name_schema by replacing capture groups
+      if (!is.null(source$capture_groups) && length(source$capture_groups) > 0) {
+        # Split the pattern at capture groups
+        pattern_parts <- strsplit(pattern, "\\(.+?\\)", perl = TRUE)[[1]]
+        capture_groups <- paste0("<", source$capture_groups, ">")
+        
+        # Interleave pattern parts and capture groups
+        # (This works when capture groups are at the end)
+        name_schema <- paste0(
+          paste(
+            c(rbind(pattern_parts, c(capture_groups, ""))), 
+            collapse = ""
+          )
+        )
+        
+        # Clean up any regex characters
+        name_schema <- gsub("\\^|\\$|\\\\|\\?", "", name_schema)
+      } else {
+        name_schema <- gsub("\\^|\\$|\\\\|\\?", "", pattern)
+      }
+      
+      # Move parts of the file name schema that are directories into the path
+      split_schema <- strsplit(name_schema, split = '/')[[1]]
+      name_schema <- split_schema[[length(split_schema)]]
+      path <- paste0(c(path, split_schema[seq_len(length(split_schema) - 1)]), collapse = '/')
+      
+      # Combine path and name_schema
+      schema <- paste0(path, '/', name_schema)
+      
+      data.frame(
+        target = output_name,
+        description = description,
+        category = category,
+        parser = parser,
+        combiner = combiner,
+        schema = schema,
+        stringsAsFactors = FALSE
+      )
+    }))
+    
+    sources_df
   }))
   
   tibble::as_tibble(desc_data)
@@ -364,3 +407,127 @@ parse_output_meta_json <- function(outdir_path) {
   RcppSimdJson::fload(meta_path, max_simplify_lvl = 'vector')
 }
 
+
+#' Print pathogensurveillance outdir schema
+#'
+#' Print the output directory layout for a given pipeline output
+#'
+#' @inheritParams known_ps_outputs
+#'
+#' @export
+print_outdir_schema <- function(outdir_path, exists = TRUE) {
+  
+  path_data <- known_ps_outputs(outdir_path, exists = exists)
+  
+  # Sort alphabetically by path
+  path_data <- path_data[order(path_data$schema), , drop = FALSE]
+  
+  # Split paths into components
+  paths <- strsplit(path_data$schema, "/", fixed = TRUE)
+  
+  # Create a data structure to track directory hierarchy
+  dir_levels <- list()
+  max_depth <- max(sapply(paths, length))
+  
+  # Initialize the tree structure
+  tree <- data.frame(
+    name = ".",
+    depth = 0,
+    is_last = FALSE,
+    parent = NA,
+    description = NA,
+    stringsAsFactors = FALSE
+  )
+  
+  # Process each path
+  for (i in seq_along(paths)) {
+    current_parent <- 1  # Start from root
+    for (depth in seq_along(paths[[i]])) {
+      component <- paths[[i]][depth]
+      is_file <- (depth == length(paths[[i]]))
+      
+      # Check if this component already exists at this level
+      existing <- which(
+        tree$parent == current_parent & 
+          tree$name == component & 
+          tree$depth == depth
+      )
+      
+      if (length(existing) == 0) {
+        # Add new node
+        new_node <- data.frame(
+          name = component,
+          depth = depth,
+          is_last = FALSE,  # Will update later
+          parent = current_parent,
+          description = ifelse(is_file, path_data$description[i], NA),
+          stringsAsFactors = FALSE
+        )
+        tree <- rbind(tree, new_node)
+        current_parent <- nrow(tree)
+      } else {
+        current_parent <- existing[1]
+      }
+    }
+  }
+  
+  # Determine which nodes are last in their groups
+  for (parent_id in unique(tree$parent)) {
+    if (!is.na(parent_id)) {
+      children <- which(tree$parent == parent_id)
+      tree$is_last[children[length(children)]] <- TRUE
+    }
+  }
+  
+  # Prepare indentation patterns and calculate line lengths
+  indent_symbols <- character(nrow(tree))
+  line_lengths <- integer(nrow(tree))
+  max_line_length <- 0
+  
+  for (i in 2:nrow(tree)) {
+    if (tree$depth[i] == 1) {
+      indent_symbols[i] <- ifelse(tree$is_last[i], "└── ", "├── ")
+    } else {
+      # Get all ancestors
+      ancestors <- c()
+      current <- i
+      while (!is.na(tree$parent[current])) {
+        ancestors <- c(tree$parent[current], ancestors)
+        current <- tree$parent[current]
+      }
+      
+      # Build indentation
+      indent <- ""
+      for (a in ancestors[-1]) {  # Skip root
+        if (tree$is_last[a]) {
+          indent <- paste0(indent, "    ")
+        } else {
+          indent <- paste0(indent, "│   ")
+        }
+      }
+      indent_symbols[i] <- paste0(
+        indent,
+        ifelse(tree$is_last[i], "└── ", "├── ")
+      )
+    }
+    
+    # Calculate line length (without description)
+    line_lengths[i] <- nchar(indent_symbols[i]) + nchar(tree$name[i])
+    if (!is.na(tree$description[i])) {
+      # Update max line length if this is a file with description
+      max_line_length <- max(max_line_length, line_lengths[i])
+    }
+  }
+  
+  # Print the tree
+  cat(".\n")
+  for (i in 2:nrow(tree)) {  # Skip root
+    line <- paste0(indent_symbols[i], tree$name[i])
+    if (!is.na(tree$description[i])) {
+      # Calculate padding needed to align descriptions
+      padding <- max_line_length - line_lengths[i] + 2
+      line <- paste0(line, strrep(" ", padding), ": ", tree$description[i])
+    }
+    cat(line, "\n")
+  }
+}
