@@ -4,13 +4,28 @@
 \alias{print_outdir_schema}
 \title{Print pathogensurveillance outdir schema}
 \usage{
-print_outdir_schema(outdir_path, exists = TRUE)
+print_outdir_schema(
+  outdir_path,
+  exists = TRUE,
+  verbose = NULL,
+  print_all = NULL
+)
 }
 \arguments{
 \item{outdir_path}{The path to an output directory of pathogensurviellance}
 
 \item{exists}{If \code{TRUE}, information is only returned for output type that
 exist, rather than all output type that are known.}
+
+\item{verbose}{\code{logical} or \code{NULL}. If \code{TRUE}, uses the name column for file
+descriptions. If \code{FALSE}, uses the description column. If \code{NULL} (default),
+automatically chooses based on terminal width - uses description if it fits
+without line breaks, otherwise uses name.}
+
+\item{print_all}{\code{logical} or \code{NULL}. If \code{TRUE}, all outputs are listed, including
+less important outputs like log files and unfiltered data, otherwise only
+primary outputs are printed. \code{NULL} (the default) is the same as \code{FALSE}
+except a note is printed describing this option.}
 }
 \description{
 Print the output directory layout for a given pipeline output

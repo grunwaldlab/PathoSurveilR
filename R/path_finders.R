@@ -336,6 +336,10 @@ known_ps_outputs <- function(outdir_path, exists = TRUE) {
     if (is.null(description)) {
       description <- name
     }
+    is_primary <- output$primary
+    if (is.null(is_primary)) {
+      is_primary <- TRUE
+    }
     category <- output$category
     parser <- output$parsers$r
     combiner <- output$combiners$r
@@ -391,6 +395,7 @@ known_ps_outputs <- function(outdir_path, exists = TRUE) {
         name = name,
         description = description,
         category = category,
+        primary = is_primary,
         parser = parser,
         combiner = combiner,
         schema = schema,
@@ -423,14 +428,50 @@ parse_output_meta_json <- function(outdir_path) {
 #' Print the output directory layout for a given pipeline output
 #'
 #' @inheritParams known_ps_outputs
+#' @param verbose `logical` or `NULL`. If `TRUE`, uses the name column for file
+#'   descriptions. If `FALSE`, uses the description column. If `NULL` (default),
+#'   automatically chooses based on terminal width - uses description if it fits
+#'   without line breaks, otherwise uses name.
+#' @param print_all `logical` or `NULL`. If `TRUE`, all outputs are listed, including
+#'   less important outputs like log files and unfiltered data, otherwise only
+#'   primary outputs are printed. `NULL` (the default) is the same as `FALSE`
+#'   except a note is printed describing this option.
 #'
 #' @export
-print_outdir_schema <- function(outdir_path, exists = TRUE) {
+print_outdir_schema <- function(outdir_path, exists = TRUE, verbose = NULL, print_all = NULL) {
+  
   
   path_data <- known_ps_outputs(outdir_path, exists = exists)
   
+  # Only print information for primary output files
+  if (is.null(print_all) || ! print_all) {
+    path_data <- path_data[path_data$primary, , drop = FALSE]
+  }
+  
   # Sort alphabetically by path
   path_data <- path_data[order(path_data$schema), , drop = FALSE]
+  
+  # Determine which column to use for descriptions
+  if (is.null(verbose)) {
+    # Auto-detect based on terminal width
+    terminal_width <- getOption("width", default = 80)
+    
+    # Calculate maximum line length with descriptions
+    paths <- strsplit(path_data$schema, "/", fixed = TRUE)
+    max_depth <- max(sapply(paths, length))
+    max_indent <- (max_depth - 1) * 4 + 4  # 4 chars per level + tree symbols
+    max_filename <- max(nchar(basename(path_data$schema)))
+    max_desc_length <- max(nchar(path_data$description), na.rm = TRUE)
+    
+    estimated_max_line <- max_indent + max_filename + 3 + max_desc_length  # 3 for " : "
+    
+    use_description <- estimated_max_line <= terminal_width
+  } else {
+    use_description <- verbose
+  }
+  
+  # Choose the appropriate column for descriptions
+  description_column <- if (use_description) "description" else "name"
   
   # Split paths into components
   paths <- strsplit(path_data$schema, "/", fixed = TRUE)
@@ -470,7 +511,7 @@ print_outdir_schema <- function(outdir_path, exists = TRUE) {
           depth = depth,
           is_last = FALSE,  # Will update later
           parent = current_parent,
-          description = ifelse(is_file, path_data$description[i], NA),
+          description = ifelse(is_file, path_data[[description_column]][i], NA),
           stringsAsFactors = FALSE
         )
         tree <- rbind(tree, new_node)
@@ -539,5 +580,15 @@ print_outdir_schema <- function(outdir_path, exists = TRUE) {
       line <- paste0(line, strrep(" ", padding), ": ", tree$description[i])
     }
     cat(line, "\n")
+  }
+  
+  # Print message if using shortened names due to terminal width
+  if (is.null(verbose) && !use_description) {
+    message("Note: Using shortened file descriptions to accomodate terminal width. Use verbose=TRUE to see full descriptions.")
+  }
+  
+  # Print message if only primary inputs are being printed
+  if (is.null(print_all)) {
+    message("Note: Only primary outputs are printed. Use print_all=TRUE to see all outputs or print_all=FALSE to silence this note.")
   }
 }
