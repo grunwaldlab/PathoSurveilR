@@ -324,9 +324,18 @@ known_ps_outputs <- function(outdir_path, exists = TRUE) {
     metadata$outputs <- metadata$outputs[names(metadata$outputs) %in% all_output_types]
   }
   
-  desc_data <- do.call(rbind, lapply(names(metadata$outputs), function(output_name) {
-    output <- metadata$outputs[[output_name]]
+  desc_data <- do.call(rbind, lapply(names(metadata$outputs), function(output_id) {
+    output <- metadata$outputs[[output_id]]
+    name <- output$name
+    if (is.null(name)) {
+      name <- output_id
+      name <- paste0(toupper(substring(name, 1, 1)), substring(name[1], 2)) # Capitalize first letter
+      name <- gsub(name, pattern = '[_-]+', replacement = ' ')
+    }
     description <- output$description
+    if (is.null(description)) {
+      description <- name
+    }
     category <- output$category
     parser <- output$parsers$r
     combiner <- output$combiners$r
@@ -378,7 +387,8 @@ known_ps_outputs <- function(outdir_path, exists = TRUE) {
       schema <- paste0(path, '/', name_schema)
       
       data.frame(
-        target = output_name,
+        target = output_id,
+        name = name,
         description = description,
         category = category,
         parser = parser,
