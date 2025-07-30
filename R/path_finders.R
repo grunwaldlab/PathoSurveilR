@@ -176,14 +176,32 @@ find_ps_paths <- function(path, target, simplify = TRUE, long = TRUE, all_metada
     missing_targets <- names(all_path_data)[is_missing]
     if (length(missing_targets) > 0) {
       valid_targets <- known_ps_outputs(outdir_path = path, exists = TRUE)$target
-      suggestions <- unlist(lapply(missing_targets, suggest_option, options = valid_targets))
-      stop(
-        call. = FALSE,
-        'The following targets could not be found:\n  ', paste0('"', missing_targets, '"', collapse = ', '), '\n',
-        ifelse(length(suggestions) == 0, '', paste0('Valid targets with similar names include:\n  ', paste0('"', suggestions, '"', collapse = ', '), '\n')),
-        'To see all valid targets for this output directory use the following:\n',
-        '  print_ps_outputs("', path, '", exists = TRUE)\n' 
-      )
+      all_targets <- known_ps_outputs(outdir_path = path, exists = FALSE)$target
+      unknown_missing_targets <- missing_targets[! missing_targets %in% all_targets]
+      known_missing_targets <-  missing_targets[missing_targets %in% all_targets]
+      error_text <- ''
+      if (length(unknown_missing_targets) > 0) {
+        suggestions <- unlist(lapply(missing_targets, suggest_option, options = all_targets))
+        error_text <- paste0(
+          error_text,
+          'The following targets are not valid output IDs:\n  ', paste0('"', unknown_missing_targets, '"', collapse = ', '), '\n',
+          ifelse(length(suggestions) == 0, '', paste0('Valid targets with similar names include:\n  ', paste0('"', suggestions, '"', collapse = ', '), '\n')),
+          'To see all valid targets for this output directory use the following:\n',
+          '  print_ps_outputs("', path, '", exists = FALSE)\n' 
+        )
+      }
+      if (length(known_missing_targets) > 0) {
+        suggestions <- unlist(lapply(missing_targets, suggest_option, options = valid_targets))
+        error_text <- paste0(
+          error_text,
+          'The following targets are valid output IDs but do not exist:\n  ', paste0('"', known_missing_targets, '"', collapse = ', '), '\n',
+          ifelse(length(suggestions) == 0, '', paste0('Valid targets with similar names include:\n  ', paste0('"', suggestions, '"', collapse = ', '), '\n')),
+          'To see all valid targets that do exisit in this output directory use the following:\n',
+          '  print_ps_outputs("', path, '", exists = TRUE)\n' 
+        )
+      }
+      
+      stop( call. = FALSE, error_text)
     }
   }
   
