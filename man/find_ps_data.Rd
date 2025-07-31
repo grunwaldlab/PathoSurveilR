@@ -4,7 +4,7 @@
 \alias{find_ps_data}
 \title{Parse pathogensurveillance output files}
 \usage{
-find_ps_data(path, target, simplify = FALSE)
+find_ps_data(path, target, simplify = FALSE, must_exist = !is.null(target))
 }
 \arguments{
 \item{target}{The names of one or more output types to search for. Setting to
@@ -12,6 +12,9 @@ find_ps_data(path, target, simplify = FALSE)
 
 \item{simplify}{If \code{TRUE}, attempt to combine all of the output found into a
 single object instead of returning a list.}
+
+\item{must_exist}{If \code{TRUE}, an error is generated if the specified target
+does not exist. Otherwise \code{NULL} is returned for missing \code{target}s}
 }
 \description{
 Parse data for specific pathogensurveillance output files

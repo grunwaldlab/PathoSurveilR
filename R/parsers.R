@@ -323,10 +323,13 @@ sendsketch_taxa_present <- function(path, ani_thresh = c(species = 95, genus = 9
 #'   single object instead of returning a list.
 #'
 #' @export
-find_ps_data <- function(path, target, simplify = FALSE) {
+find_ps_data <- function(path, target, simplify = FALSE, must_exist = ! is.null(target)) {
 
   # Find output paths
-  path_data <- find_ps_paths(path = path, target = target, simplify = FALSE, all_metadata = TRUE)
+  path_data <- find_ps_paths(path = path, target = target, simplify = FALSE, all_metadata = TRUE, must_exist = must_exist)
+  if (is.null(path_data)) {
+    return(NULL)
+  }
   
   # Check that simplify can be used if specified
   if (simplify) {
