@@ -403,8 +403,13 @@ make_MSN <- function(snp_fasta_alignment, sample_data, population = NULL, intera
 #'   single plot.
 #' @param interactive Whether to use an HTML-based interactive format or not
 #'   (default: TRUE)
-#' @param subset If `TRUE`, subset references to those selected for phylogenetic
-#'   analyses.
+#' @param max_size The maximum number of rows/columns to plot. To subset the
+#'   data to this amount when needed, references most similar to the samples
+#'   will be used. If there are more samples than this, then only samples will
+#'   be plotted. This does not subset samples. See 'prefer_contextual` as well
+#' @param prefer_contextual How subsets of rows/columns are chosen when
+#'   `max_size` takes effect. If `TRUE` and contextual references have been
+#'   chosen, give preference to including them.
 #' @param height The height in pixels. If not `interactive`, this is divided by
 #'   `dpi` to convert it to inches.
 #' @param width The width in pixels. If not `interactive`, this is divided by
@@ -422,25 +427,48 @@ make_MSN <- function(snp_fasta_alignment, sample_data, population = NULL, intera
 #' estimated_ani_heatmap(path, interactive = TRUE)
 #'
 #' @export
-estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, subset = TRUE,
-                                  height = NULL, width = NULL, dpi = 100, font_size = 8,
-                                  max_label_length = 30) {
+estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, max_size = 100,
+                                  prefer_contextual = TRUE, height = NULL, width = NULL,
+                                  dpi = 100, font_size = 8, max_label_length = 30) {
   if (combine) {
     stop('The `combine` option is not yet supported.')
   }
-
+  
   # Find and parse data
   input_matrix <- find_ps_data(path, target = 'ani_matrix_csv', simplify = TRUE)
   sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
   ref_meta <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
-  ref_path_data <- find_ps_data(path, target = 'contextual_refs', simplify = TRUE)
+  sample_ids <- colnames(input_matrix)[colnames(input_matrix) %in% sample_meta$sample_id]
+  ref_ids <- colnames(input_matrix)[colnames(input_matrix) %in% ref_meta$ref_id]
   
-  if (subset & nrow(ref_path_data) > 0) {
-    refs_used <- colnames(input_matrix)[colnames(input_matrix) %in% ref_path_data$reference_id]
-    samples_used <- colnames(input_matrix)[colnames(input_matrix) %in% sample_meta$sample_id]
-    ids_used <- c(refs_used, samples_used)
-    input_matrix <- input_matrix[ids_used, ids_used]
+  if (!is.null(max_size)) {
+    if (nrow(input_matrix) > max_size) {
+      refs_to_keep <- min(max_size - length(sample_ids), length(ref_ids))
+      if (refs_to_keep > 0) {
+        # Calculate mean similarity for each reference to all samples
+        ref_similarities <- vapply(ref_ids, FUN.VALUE = numeric(1), function(ref_id) {
+          similarities <- input_matrix[sample_ids, ref_id, drop = TRUE]
+          mean(similarities, na.rm = TRUE)
+        })
+        
+        # Check if contextual references can/should be preferred
+        ref_path_data <- find_ps_data(path, target = 'contextual_refs', simplify = TRUE)
+        if (prefer_contextual && !is.null(ref_path_data)) {
+          is_contextual <- ref_ids %in% ref_path_data$reference_id
+          ordered_refs <- ref_ids[order(is_contextual, ref_similarities, decreasing = TRUE, na.last = TRUE)]
+        } else {
+          ordered_refs <- ref_ids[order(ref_similarities, decreasing = TRUE, na.last = TRUE)]
+        }
+        
+        # Subset to best refs
+        ids_used <- c(sample_ids, ordered_refs[1:refs_to_keep])
+        input_matrix <- input_matrix[ids_used, ids_used]
+      } else { # If we have too many samples, just use samples
+        input_matrix <- input_matrix[sample_ids, sample_ids]
+      }
+    }
   }
+  
   make_heatmap(input_matrix = input_matrix, sample_data = sample_meta, ref_data = ref_meta,
                interactive = interactive, height = height, width = width, dpi = dpi,
                font_size = font_size, max_label_length = max_label_length)

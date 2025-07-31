@@ -8,7 +8,8 @@ estimated_ani_heatmap(
   path,
   combine = FALSE,
   interactive = FALSE,
-  subset = TRUE,
+  max_size = 100,
+  prefer_contextual = TRUE,
   height = NULL,
   width = NULL,
   dpi = 100,
@@ -26,8 +27,14 @@ single plot.}
 \item{interactive}{Whether to use an HTML-based interactive format or not
 (default: TRUE)}
 
-\item{subset}{If \code{TRUE}, subset references to those selected for phylogenetic
-analyses.}
+\item{max_size}{The maximum number of rows/columns to plot. To subset the
+data to this amount when needed, references most similar to the samples
+will be used. If there are more samples than this, then only samples will
+be plotted. This does not subset samples. See 'prefer_contextual` as well}
+
+\item{prefer_contextual}{How subsets of rows/columns are chosen when
+\code{max_size} takes effect. If \code{TRUE} and contextual references have been
+chosen, give preference to including them.}
 
 \item{height}{The height in pixels. If not \code{interactive}, this is divided by
 \code{dpi} to convert it to inches.}
