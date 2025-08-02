@@ -1,3 +1,10 @@
+# 0.4.2
+
+## Bug fixes
+
+- Fixed bug in `plot_tree` where subtrees got repeated 
+
+
 # 0.4.1
 
 ## New features

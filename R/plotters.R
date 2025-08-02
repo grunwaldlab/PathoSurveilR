@@ -137,7 +137,7 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
     base_tree$edge.length <- rep(mean_edge_len / 4, nrow(base_tree$edge))
     combined_tree <- base_tree
     tip_rank <- as.character(tree_tax_data[, ranks[length(ranks)]])
-    index_key <- match(base_tree$tip.label, tip_rank)
+    index_key <- match(make.unique(base_tree$tip.label), make.unique(tip_rank))
     for (index in rev(seq_along(trees))) {
       combined_tree <- ape::bind.tree(combined_tree, trees[[index_key[index]]], where = index)
     }

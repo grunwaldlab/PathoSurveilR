@@ -1,7 +1,7 @@
 Package: PathoSurveilR
 Type: Package
 Title: Utilities for the pathogensurveillance pipeline
-Version: 0.4.1
+Version: 0.4.2
 Authors@R:
     c(person(given = "Zachary", 
              family = "Foster",
