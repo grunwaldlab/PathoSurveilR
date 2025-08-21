@@ -133,11 +133,13 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
 
     # Combine trees
     base_tree <- ape::as.phylo(stats::as.formula(paste0('~', paste0(ranks, collapse = '/'))), data = tree_tax_data)
-    mean_edge_len <- mean(unlist(lapply(trees, function(x) x$edge.length)))
-    base_tree$edge.length <- rep(mean_edge_len / 4, nrow(base_tree$edge))
+    base_tree$tip.label <- make.unique(base_tree$tip.label)
+    base_tree$node.label <- make.unique(base_tree$node.label)
+    max_edge_len <- max(unlist(lapply(trees, function(x) ape::node.depth.edgelength(x)[1:ape::Ntip(x)])))
+    base_tree$edge.length <- rep(max_edge_len * 0.1, nrow(base_tree$edge))
     combined_tree <- base_tree
     tip_rank <- as.character(tree_tax_data[, ranks[length(ranks)]])
-    index_key <- match(make.unique(base_tree$tip.label), make.unique(tip_rank))
+    index_key <- match(base_tree$tip.label, make.unique(tip_rank))
     for (index in rev(seq_along(trees))) {
       combined_tree <- ape::bind.tree(combined_tree, trees[[index_key[index]]], where = index)
     }
@@ -181,18 +183,18 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
   }
 
   if (is.null(combined_tree$node.label)) {
-    all_labels = c(rep(NA, combined_tree$Nnode), combined_tree$tip.label)
+    all_labels = c(combined_tree$tip.label, rep(NA, combined_tree$Nnode))
   } else {
-    all_labels = c(combined_tree$node.label, combined_tree$tip.label)
+    all_labels = c(combined_tree$tip.label, combined_tree$node.label)
   }
 
   node_data <- tibble::tibble(
     newick_label = all_labels,
     node_label = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "", all_labels),
-    branch_color = 'black',
-    branch_type = 'solid'
-    # branch_color = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "grey", "black"),
-    # branch_type = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "dashed", "solid")
+    # branch_color = 'black',
+    # branch_type = 'solid',
+    branch_color = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "grey", "black"),
+    branch_type = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "dashed", "solid")
   )
 
   legend_title <- tools::toTitleCase(trimws(gsub(color_by, pattern = '_', replacement = ' ')))
