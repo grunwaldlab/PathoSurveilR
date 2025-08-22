@@ -176,10 +176,16 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
     tip_label = tip_labels[combined_tree$tip.label]
   )
 
-  if (is.null(color_by) || length(trees) <= 1) {
-    base_tree_node_labels <- character(0)
-  } else {
-    base_tree_node_labels <- base_tree$node.label
+  # Get node labels from input trees to identify non-base tree branches
+  input_tree_node_labels <- character(0)
+  if (length(trees) > 1) {
+    input_tree_node_labels <- unique(unlist(lapply(trees, function(tree) {
+      if (!is.null(tree$node.label)) {
+        return(tree$node.label)
+      } else {
+        return(character(0))
+      }
+    })))
   }
 
   if (is.null(combined_tree$node.label)) {
@@ -188,14 +194,30 @@ plot_phylogeny <- function(trees, sample_meta, ref_meta, color_by = NULL, collap
     all_labels = c(combined_tree$tip.label, combined_tree$node.label)
   }
 
-  node_data <- tibble::tibble(
-    newick_label = all_labels,
-    node_label = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "", all_labels),
-    # branch_color = 'black',
-    # branch_type = 'solid',
-    branch_color = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "grey", "black"),
-    branch_type = ifelse(all_labels %in% c(base_tree_node_labels, "Root"), "dashed", "solid")
-  )
+  # Use groupOTU to identify branches that belong to input trees (not base tree)
+  if (length(input_tree_node_labels) > 0) {
+    # Create groups based on input tree node labels
+    input_tree_groups <- ggtree::groupOTU(combined_tree, input_tree_node_labels)
+    group_info <- attr(input_tree_groups, "group")
+    
+    # Branches with input tree nodes should be black/solid, base tree should be grey/dashed
+    is_input_tree_branch <- group_info > 0
+    
+    node_data <- tibble::tibble(
+      newick_label = all_labels,
+      node_label = ifelse(all_labels %in% input_tree_node_labels, all_labels, ""),
+      branch_color = ifelse(is_input_tree_branch, "black", "grey"),
+      branch_type = ifelse(is_input_tree_branch, "solid", "dashed")
+    )
+  } else {
+    # Single tree case - all branches black and solid
+    node_data <- tibble::tibble(
+      newick_label = all_labels,
+      node_label = ifelse(is.na(all_labels), "", all_labels),
+      branch_color = "black",
+      branch_type = "solid"
+    )
+  }
 
   legend_title <- tools::toTitleCase(trimws(gsub(color_by, pattern = '_', replacement = ' ')))
 
