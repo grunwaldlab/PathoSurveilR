@@ -698,3 +698,59 @@ sendsketch_taxonomy_plot <- function(path, interactive = FALSE, ...) {
 
   return(output)
 }
+
+#' Make map widget
+#'
+#' Converts classifications of top hits in sendsketch output into an interactive
+#' sunburst plot.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output or a sample metadata table with coordinates.
+#'
+#' @export
+sample_distribution_map <- function(path) {
+  
+  # Parse the input if it is a file/folder path
+  # if (is.data.frame(path)) {
+  #   metadata <- path
+  # } else {
+  #   metadata <- find_ps_data(path, target = 'sample_metadata') 
+  # }
+  
+  # TODO: temp test data, remove later
+  metadata <- data.frame(
+    latitude = runif(20, min = 34.0, max = 45.0),
+    longitude = runif(20, min = -120.0, max = -75.0),
+    name = paste("Sample", 1:20),
+    type = sample(c("Nursery", "Forest", "Urban", "Farm"), 20, replace = TRUE),
+    proportion_infected = runif(20)
+  )
+  
+  # Create a color palette based on population
+  pal <- leaflet::colorNumeric(palette = "viridis", domain = metadata$proportion_infected)
+  
+  map_widget <- leaflet::leaflet(data = metadata)
+  map_widget <- leaflet::addProviderTiles(map_widget, leaflet::providers$CartoDB.Positron)
+  map_widget <-leaflet::addCircleMarkers(
+      map_widget,
+      lng = metadata$longitude, 
+      lat = metadata$latitude,
+      color = pal(metadata$proportion_infected),
+      fillColor = pal(metadata$proportion_infected),
+      fillOpacity = 0.7,
+      popup = ~paste("<b>", name, "</b><br>",
+                     "Proportion Infected: ", format(proportion_infected, big.mark = ","), "<br>",
+                     "Coordinates: ", round(latitude, 4), "°, ", round(longitude, 4), "°"),
+      label = metadata$sample_id)
+    map_widget <- leaflet::addLegend(
+      map_widget,
+      "bottomright", 
+      pal = pal, 
+      values = ~proportion_infected,
+      title = "Proportion Infected",
+      opacity = 1
+    )
+    
+    return(map_widget)
+}
+  
