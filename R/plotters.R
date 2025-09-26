@@ -723,11 +723,13 @@ sample_distribution_map <- function(path) {
     longitude = runif(20, min = -120.0, max = -75.0),
     name = paste("Sample", 1:20),
     type = sample(c("Nursery", "Forest", "Urban", "Farm"), 20, replace = TRUE),
+    
     proportion_infected = runif(20)
   )
   
   # Create a color palette based on population
-  pal <- leaflet::colorNumeric(palette = "viridis", domain = metadata$proportion_infected)
+  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata$proportion_infected)
+  borderPal <- leaflet::colorFactor(palette = "rocket", domain = metadata$type)
   
   map_widget <- leaflet::leaflet(data = metadata)
   map_widget <- leaflet::addProviderTiles(map_widget, leaflet::providers$CartoDB.Positron)
@@ -735,21 +737,33 @@ sample_distribution_map <- function(path) {
       map_widget,
       lng = metadata$longitude, 
       lat = metadata$latitude,
-      color = pal(metadata$proportion_infected),
-      fillColor = pal(metadata$proportion_infected),
+      
+      color = borderPal(metadata$type),
+      fillColor = fillPal(metadata$proportion_infected),
       fillOpacity = 0.7,
+      stroke = TRUE,
       popup = ~paste("<b>", name, "</b><br>",
                      "Proportion Infected: ", format(proportion_infected, big.mark = ","), "<br>",
                      "Coordinates: ", round(latitude, 4), "°, ", round(longitude, 4), "°"),
       label = metadata$sample_id)
-    map_widget <- leaflet::addLegend(
+  
+ map_widget <- leaflet::addLegend(
       map_widget,
       "bottomright", 
-      pal = pal, 
+      pal = fillPal, 
       values = ~proportion_infected,
       title = "Proportion Infected",
       opacity = 1
     )
+ 
+ map_widget <- leaflet::addLegend(
+   map_widget,
+   "bottomleft", 
+   pal = borderPal, 
+   values = ~type,
+   title = "Location Type",
+   opacity = 1
+ )
     
     return(map_widget)
 }
