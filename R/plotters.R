@@ -723,8 +723,20 @@ sample_distribution_map <- function(path) {
     longitude = runif(20, min = -120.0, max = -75.0),
     name = paste("Sample", 1:20),
     type = sample(c("Nursery", "Forest", "Urban", "Farm"), 20, replace = TRUE),
-    
+    color_by = 'type;proportion_infected',
     proportion_infected = runif(20)
+  )
+  metadata_json <- jsonlite::toJSON(metadata)
+  
+  # TODO: try to replace functionality with HTML strings without htmltools
+  dropdown_html <- tags$div(
+    style = "position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 10px; border-radius: 5px;",
+    tags$label("Color by:"),
+    tags$select(
+      id = "colorVariable",
+      tags$option(value = "proportion_infected", "Proportion infected"),
+      tags$option(value = "type", "Type")
+    )
   )
   
   # Create a color palette based on population
@@ -733,20 +745,84 @@ sample_distribution_map <- function(path) {
   
   map_widget <- leaflet::leaflet(data = metadata)
   map_widget <- leaflet::addProviderTiles(map_widget, leaflet::providers$CartoDB.Positron)
-  map_widget <-leaflet::addCircleMarkers(
-      map_widget,
-      lng = metadata$longitude, 
-      lat = metadata$latitude,
-      
-      color = borderPal(metadata$type),
-      fillColor = fillPal(metadata$proportion_infected),
-      fillOpacity = 0.7,
-      stroke = TRUE,
-      popup = ~paste("<b>", name, "</b><br>",
-                     "Proportion Infected: ", format(proportion_infected, big.mark = ","), "<br>",
-                     "Coordinates: ", round(latitude, 4), "°, ", round(longitude, 4), "°"),
-      label = metadata$sample_id)
+  map_widget <- htmlwidgets::onRender(map_widget,
+    sprintf(
+      "
+        function(el, map_widget) {
+        
+          var metadata = %s;
+          var currentMarkers = [];
+          
+          function colorScale(value) {
+            // Green scale: density from 1K to 11K
+            var intensity = (value - 0) / 1;
+            intensity = Math.max(0, Math.min(1, intensity));
+            var r = Math.floor(240 * (1 - intensity));
+            var g = Math.floor(200 + 55 * intensity);
+            var b = Math.floor(240 * (1 - intensity));
+            return 'rgb(' + r + ',' + g + ',' + b + ')';
+          }
+                   
+          // Initial render
+          updateColors('proportion_infected');
+          
+          function updateColors(variable) {
+
+          
+            // Remove existing markers
+            currentMarkers.forEach(function(marker) {
+              map_widget.removeLayer(marker);
+            });
+            currentMarkers = [];
+            
+            // Add new markers
+            metadata.forEach(function(row) {
+              
+              var color = colorScale(row[variable]);
+              
+              var marker = L.circleMarker([row.latitude, row.longitude], {
+                radius: 10,
+                fillColor: color,
+                color: '#000',
+                weight: 1,
+                fillOparow: 0.8
+              }).addTo(map_widget);
+              
+              marker.bindPopup(
+                '<b>' + row.name + '</b><br>' +
+                'Proportion Infected: ' + row.proportion_infected.toLocaleString()
+              );
+              
+              currentMarkers.push(marker);
+            });
+          }
+          
+          // Event listener for dropdown
+          document.getElementById('colorVariable').addEventListener('change', function(e) {
+            updateColors(e.target.value);
+          });
+        }
+        ",
+      metadata_json
+    )
+  )
+  browsable(tagList(dropdown_html, map_widget))
   
+  # map_widget <- leaflet::addCircleMarkers(
+  #     map_widget,
+  #     lng = metadata$longitude, 
+  #     lat = metadata$latitude,
+  #     clusterOptions = markerClusterOptions(),
+  #     
+  #     color = borderPal(metadata$type),
+  #     fillColor = fillPal(metadata$proportion_infected),
+  #     fillOpacity = 0.7,
+  #     stroke = TRUE,
+  #     popup = ~paste("<b>", name, "</b><br>",
+  #                    "Proportion Infected: ", format(proportion_infected, big.mark = ","), "<br>",
+  #                    "Coordinates: ", round(latitude, 4), "°, ", round(longitude, 4), "°"),
+  #     label = metadata$sample_id)
+  # 
  map_widget <- leaflet::addLegend(
       map_widget,
       "bottomright", 
