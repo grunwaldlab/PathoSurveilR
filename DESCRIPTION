@@ -52,8 +52,6 @@ Imports:
   xml2,
   yaml,
   RcppSimdJson,
-  jsonlite,
-  htmltools,
   leaflet
 Encoding: UTF-8
 LazyData: true
