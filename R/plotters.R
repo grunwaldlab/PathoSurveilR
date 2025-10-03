@@ -723,14 +723,21 @@ sample_distribution_map <- function(path) {
     longitude = runif(20, min = -120.0, max = -75.0),
     name = paste("Sample", 1:20),
     type = sample(c("Nursery", "Forest", "Urban", "Farm"), 20, replace = TRUE),
-    color_by = 'type;proportion_infected',
+    color_by = c(rep('type;proportion_infected', 10), rep('type', 10)),
     proportion_infected = runif(20)
   )
-  metadata_json <- jsonlite::toJSON(metadata)
+  
+  split_colorby = strsplit(metadata$color_by, split = ';')
+  unlisted_colorby = unlist(split_colorby)
+  plot_factors = unique(unlisted_colorby)
+  
+  border_column = plot_factors[1]
+  fill_column = plot_factors[2]
+  
   
   # Create a color palette based on population
-  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata$proportion_infected)
-  borderPal <- leaflet::colorFactor(palette = "rocket", domain = metadata$type)
+  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata[[fill_column]])
+  borderPal <- leaflet::colorFactor(palette = "rocket", domain = metadata[[border_column]])
   
   map_widget <- leaflet::leaflet(data = metadata)
   map_widget <- leaflet::addProviderTiles(map_widget, leaflet::providers$CartoDB.Positron)
@@ -740,21 +747,19 @@ sample_distribution_map <- function(path) {
       lat = metadata$latitude,
       clusterOptions = leaflet::markerClusterOptions(),
 
-      color = borderPal(metadata$type),
-      fillColor = fillPal(metadata$proportion_infected),
+      color = borderPal(metadata[[border_column]]),
+      fillColor = fillPal(metadata[[fill_column]]),
       fillOpacity = 0.7,
       stroke = TRUE,
-      popup = ~paste("<b>", name, "</b><br>",
-                     "Proportion Infected: ", format(proportion_infected, big.mark = ","), "<br>",
-                     "Coordinates: ", round(latitude, 4), "°, ", round(longitude, 4), "°"),
+      popup = ~paste("<b>", name, "</b><br>"),
       label = metadata$sample_id)
 
   map_widget <- leaflet::addLegend(
     map_widget,
     "bottomright", 
     pal = fillPal, 
-    values = ~proportion_infected,
-    title = "Proportion Infected",
+    values = metadata[[fill_column]],
+    title = fill_column,
     opacity = 1
   )
   
@@ -762,8 +767,8 @@ sample_distribution_map <- function(path) {
     map_widget,
     "bottomleft", 
     pal = borderPal, 
-    values = ~type,
-    title = "Location Type",
+    values = metadata[[border_column]],
+    title = border_column,
     opacity = 1
   )
   
