@@ -722,22 +722,63 @@ sample_distribution_map <- function(path) {
     latitude = runif(20, min = 34.0, max = 45.0),
     longitude = runif(20, min = -120.0, max = -75.0),
     name = paste("Sample", 1:20),
-    type = sample(c("Nursery", "Forest", "Urban", "Farm"), 20, replace = TRUE),
     color_by = c(rep('type;proportion_infected', 10), rep('type', 10)),
+    type = sample(c("Nursery", "Forest", "Urban", "Farm"), 20, replace = TRUE),
     proportion_infected = runif(20)
   )
   
+  # Define which columns can be used for color or size
   split_colorby = strsplit(metadata$color_by, split = ';')
   unlisted_colorby = unlist(split_colorby)
   plot_factors = unique(unlisted_colorby)
   
-  column_1_title = tools::toTitleCase(gsub('_', ' ', plot_factors[1]))
-  column_2_title = tools::toTitleCase(gsub('_', ' ', plot_factors[2]))
+  # Create human readable titles for columns
+  title_key = tools::toTitleCase(gsub('_', ' ', plot_factors))
+  names(title_key) <- plot_factors
   
-  # Create a color palette based on population
-  borderPal <- leaflet::colorFactor(palette = "rocket", domain = metadata[[plot_factors[1]]])
-  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata[[plot_factors[2]]])
+  # Create popup HTML
+  # TODO: round long decimals for pretty printing (look into signif(), format(), round())
+  # 2134235423523 -> 2134235423523
+  # 12.324343243 -> 12.324
+  # 0.0000000123123 -> 0.0000000123
+  make_popup <- function(index, max_decimals = 3) {
+    paste0(
+      "<b>", metadata$name[index], "</b><br>",
+      paste(title_key, ":", metadata[index, plot_factors], collapse = "<br>")
+    )
+  }
+  metadata$popup <- unlist(lapply(1:nrow(metadata), make_popup))
   
+  # Define what columns can be used for size and color
+  color_encodable <- plot_factors
+  can_be_encoded_by_size <- vapply(metadata[plot_factors], is.numeric, FUN.VALUE = logical(1))
+  size_encodable <- plot_factors[can_be_encoded_by_size]
+  
+  # Define default color and size columns
+  color_column <- NA
+  size_column <- NA
+  if (length(plot_factors) == 1) {
+    color_column <- plot_factors
+  } else {
+    if (length(size_encodable) >= 1) {
+      size_column <- size_encodable[1]
+      color_column <- plot_factors[plot_factors != size_column][1]
+    } else {
+      color_column <- plot_factors[1]
+    }
+  }
+  
+  make_palette <- function(column) {
+    values <- metadata[[column]]
+    if (is.numeric(values)) {
+      return(leaflet::colorNumeric(palette = "viridis", domain = values))
+    } else {
+      return(leaflet::colorFactor(palette = "viridis", domain = values))
+    }
+  }
+
+  # Create map widget with leaflet
+  color_palette_func <- make_palette(color_column)
   map_widget <- leaflet::leaflet(data = metadata)
   map_widget <- leaflet::addProviderTiles(map_widget, leaflet::providers$CartoDB.Positron)
   map_widget <- leaflet::addCircleMarkers(
@@ -745,34 +786,22 @@ sample_distribution_map <- function(path) {
       lng = metadata$longitude,
       lat = metadata$latitude,
       clusterOptions = leaflet::markerClusterOptions(),
-
-      color = borderPal(metadata[[plot_factors[1]]]),
-      fillColor = fillPal(metadata[[plot_factors[2]]]),
+      color = color_palette_func(metadata[[color_column]]),
       fillOpacity = 0.7,
       stroke = TRUE,
-      popup = ~paste("<b>", name, "</b><br>", column_1_title, ":", metadata[[plot_factors[1]]],"<br>", column_2_title, ":", metadata[[plot_factors[2]]]),
+      popup = ~popup,
       label = metadata$sample_id)
-
-  #Will be one legend in the case of a dropdown menu? 2 
-  #using the border-fill system
   
   map_widget <- leaflet::addLegend(
     map_widget,
     "bottomright", 
-    pal = fillPal, 
-    values = metadata[[plot_factors[2]]],
-    title = column_1_title,
+    pal = color_palette_func, 
+    values = metadata[[color_column]],
+    title = unname(title_key[color_column]),
     opacity = 1
   )
   
-  map_widget <- leaflet::addLegend(
-    map_widget,
-    "bottomleft", 
-    pal = borderPal, 
-    values = metadata[[plot_factors[1]]],
-    title = column_2_title,
-    opacity = 1
-  )
+
   
   return(map_widget)
 }
