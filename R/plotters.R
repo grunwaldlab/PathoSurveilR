@@ -731,12 +731,12 @@ sample_distribution_map <- function(path) {
   unlisted_colorby = unlist(split_colorby)
   plot_factors = unique(unlisted_colorby)
   
-  column_1_title = tools::toTitleCase(gsub('_', ' ', plot_factors[2]))
-  column_2_title = tools::toTitleCase(gsub('_', ' ', plot_factors[1]))
+  column_1_title = tools::toTitleCase(gsub('_', ' ', plot_factors[1]))
+  column_2_title = tools::toTitleCase(gsub('_', ' ', plot_factors[2]))
   
   # Create a color palette based on population
-  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata[[plot_factors[2]]])
   borderPal <- leaflet::colorFactor(palette = "rocket", domain = metadata[[plot_factors[1]]])
+  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata[[plot_factors[2]]])
   
   map_widget <- leaflet::leaflet(data = metadata)
   map_widget <- leaflet::addProviderTiles(map_widget, leaflet::providers$CartoDB.Positron)
@@ -750,7 +750,7 @@ sample_distribution_map <- function(path) {
       fillColor = fillPal(metadata[[plot_factors[2]]]),
       fillOpacity = 0.7,
       stroke = TRUE,
-      popup = ~paste("<b>", name, "</b><br>", column_1_title, "<br>", column_2_title),
+      popup = ~paste("<b>", name, "</b><br>", column_1_title, ":", metadata[[plot_factors[1]]],"<br>", column_2_title, ":", metadata[[plot_factors[2]]]),
       label = metadata$sample_id)
 
   #Will be one legend in the case of a dropdown menu? 2 
