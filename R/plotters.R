@@ -731,13 +731,12 @@ sample_distribution_map <- function(path) {
   unlisted_colorby = unlist(split_colorby)
   plot_factors = unique(unlisted_colorby)
   
-  border_column = plot_factors[1]
-  fill_column = plot_factors[2]
-  
+  column_1_title = tools::toTitleCase(gsub('_', ' ', plot_factors[2]))
+  column_2_title = tools::toTitleCase(gsub('_', ' ', plot_factors[1]))
   
   # Create a color palette based on population
-  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata[[fill_column]])
-  borderPal <- leaflet::colorFactor(palette = "rocket", domain = metadata[[border_column]])
+  fillPal <- leaflet::colorNumeric(palette = "viridis", domain = metadata[[plot_factors[2]]])
+  borderPal <- leaflet::colorFactor(palette = "rocket", domain = metadata[[plot_factors[1]]])
   
   map_widget <- leaflet::leaflet(data = metadata)
   map_widget <- leaflet::addProviderTiles(map_widget, leaflet::providers$CartoDB.Positron)
@@ -747,19 +746,22 @@ sample_distribution_map <- function(path) {
       lat = metadata$latitude,
       clusterOptions = leaflet::markerClusterOptions(),
 
-      color = borderPal(metadata[[border_column]]),
-      fillColor = fillPal(metadata[[fill_column]]),
+      color = borderPal(metadata[[plot_factors[1]]]),
+      fillColor = fillPal(metadata[[plot_factors[2]]]),
       fillOpacity = 0.7,
       stroke = TRUE,
-      popup = ~paste("<b>", name, "</b><br>"),
+      popup = ~paste("<b>", name, "</b><br>", column_1_title, "<br>", column_2_title),
       label = metadata$sample_id)
 
+  #Will be one legend in the case of a dropdown menu? 2 
+  #using the border-fill system
+  
   map_widget <- leaflet::addLegend(
     map_widget,
     "bottomright", 
     pal = fillPal, 
-    values = metadata[[fill_column]],
-    title = fill_column,
+    values = metadata[[plot_factors[2]]],
+    title = column_1_title,
     opacity = 1
   )
   
@@ -767,11 +769,12 @@ sample_distribution_map <- function(path) {
     map_widget,
     "bottomleft", 
     pal = borderPal, 
-    values = metadata[[border_column]],
-    title = border_column,
+    values = metadata[[plot_factors[1]]],
+    title = column_2_title,
     opacity = 1
   )
   
   return(map_widget)
 }
+
   
