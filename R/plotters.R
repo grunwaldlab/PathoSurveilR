@@ -755,24 +755,19 @@ sample_distribution_map <- function(path) {
       color_column <- plot_factors[1]
     }
   }
-  
-  #Format numeric output for popups
-  format_numeric_output <- function(sigfigs)  {
-    output <- metadata[plot_factors]
-    output[size_encodable] <- lapply(output[size_encodable], signif, digits = sigfigs)
-    return(output)
-  }
-  
+
   # Create popup HTML
-  # TODO: round long decimals for pretty printing (look into signif(), format(), round())
-  # 2134235423523 -> 2134235423523
-  # 12.324343243 -> 12.324
-  # 0.0000000123123 -> 0.0000000123
   make_popup <- function(index, max_decimals = 3) {
-    formatted <- format_numeric_output(max_decimals)
+    values <- sapply(metadata[index, plot_factors], function(x) {
+      if (is.numeric(x)) {
+        return(signif(x, digits = max_decimals))
+      } else {
+        return(x)
+      }
+    })
     paste0(
       "<b>", metadata$name[index], "</b><br>",
-      paste(title_key, ":", formatted[index, ], collapse = "<br>")
+      paste(title_key, ":", values, collapse = "<br>")
     )
   }
   metadata$popup <- unlist(lapply(1:nrow(metadata), make_popup))
