@@ -566,3 +566,44 @@ suggest_option <- function(input, options,
   
   return(suggestions)
 }
+
+#' Linearly Rescale Numeric Values to a New Range
+#'
+#' This function rescales a numeric vector from its original range to a new, specified range.
+#' It performs a linear transformation such that the minimum and maximum values of the input
+#' correspond to `new_min` and `new_max`, respectively. Constant vectors are handled gracefully
+#' by assigning all elements to the midpoint of the new range.
+#'
+#' @param values A numeric vector of values to be rescaled.
+#' @param new_min A numeric value specifying the lower bound of the new range.
+#' @param new_max A numeric value specifying the upper bound of the new range. 
+#'
+#' @return
+#' A numeric vector of the same length as `values`, with each element rescaled to the new range.
+#' Missing values (`NA`) are preserved.
+#'
+#' @examples
+#' # Basic usage
+#' rescale(c(2, 4, 6, 8, 10), new_min = 0, new_max = 1)
+#'
+#' # Constant vector
+#' rescale(rep(5, 4), new_min = 10, new_max = 20)
+#'
+#' # Vector with missing values
+#' rescale(c(1, 2, NA, 3), 0, 10)
+#'
+#' @keywords internal
+rescale <- function(values, new_min = 10, new_max = 100) {
+  if (all(is.na(values))) {
+    return(values)
+  }
+  min_values = min(values, na.rm = TRUE)
+  max_values = max(values, na.rm = TRUE)
+  if (min_values == max_values) {
+    scaled_values = rep(mean(c(new_min, new_max)), length(values))
+    return(scaled_values)
+  } else {
+    scaled_values = new_min + ((values - min_values)/(max_values - min_values)) * (new_max - new_min)    
+    return(scaled_values)
+  }
+}

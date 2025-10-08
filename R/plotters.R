@@ -781,6 +781,7 @@ sample_distribution_map <- function(path) {
       return(leaflet::colorFactor(palette = "viridis", domain = values))
     }
   }
+  
 
   # Create map widget with leaflet
   color_palette_func <- make_palette(color_column)
