@@ -722,9 +722,10 @@ sample_distribution_map <- function(path) {
     latitude = runif(20, min = 34.0, max = 45.0),
     longitude = runif(20, min = -120.0, max = -75.0),
     name = paste("Sample", 1:20),
-    color_by = c(rep('type;proportion_infected', 10), rep('type', 10)),
+    color_by = c(rep('type;proportion_infected;comically_small_test_column', 10), rep('type', 10)),
     type = sample(c("Nursery", "Forest", "Urban", "Farm"), 20, replace = TRUE),
-    proportion_infected = runif(20)
+    proportion_infected = runif(20),
+    comically_small_test_column = sample(c(0.000001898, 0.0000000023678876, 0.0024), 20, replace = TRUE)
   )
   
   # Define which columns can be used for color or size
@@ -735,19 +736,6 @@ sample_distribution_map <- function(path) {
   # Create human readable titles for columns
   title_key = tools::toTitleCase(gsub('_', ' ', plot_factors))
   names(title_key) <- plot_factors
-  
-  # Create popup HTML
-  # TODO: round long decimals for pretty printing (look into signif(), format(), round())
-  # 2134235423523 -> 2134235423523
-  # 12.324343243 -> 12.324
-  # 0.0000000123123 -> 0.0000000123
-  make_popup <- function(index, max_decimals = 3) {
-    paste0(
-      "<b>", metadata$name[index], "</b><br>",
-      paste(title_key, ":", metadata[index, plot_factors], collapse = "<br>")
-    )
-  }
-  metadata$popup <- unlist(lapply(1:nrow(metadata), make_popup))
   
   # Define what columns can be used for size and color
   color_encodable <- plot_factors
@@ -767,6 +755,28 @@ sample_distribution_map <- function(path) {
       color_column <- plot_factors[1]
     }
   }
+  
+  #Format numeric output for popups
+  format_numeric_output <- function(sigfigs)  {
+    output <- metadata[plot_factors]
+    output[size_encodable] <- lapply(output[size_encodable], signif, digits = sigfigs)
+    return(output)
+  }
+  
+  # Create popup HTML
+  # TODO: round long decimals for pretty printing (look into signif(), format(), round())
+  # 2134235423523 -> 2134235423523
+  # 12.324343243 -> 12.324
+  # 0.0000000123123 -> 0.0000000123
+  make_popup <- function(index, max_decimals = 3) {
+    formatted <- format_numeric_output(max_decimals)
+    paste0(
+      "<b>", metadata$name[index], "</b><br>",
+      paste(title_key, ":", formatted[index, ], collapse = "<br>")
+    )
+  }
+  metadata$popup <- unlist(lapply(1:nrow(metadata), make_popup))
+  
   
   make_palette <- function(column) {
     values <- metadata[[column]]
