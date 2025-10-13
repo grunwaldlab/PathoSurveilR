@@ -593,7 +593,7 @@ suggest_option <- function(input, options,
 #' rescale(c(1, 2, NA, 3), 0, 10)
 #'
 #' @keywords internal
-rescale <- function(values, new_min = 10, new_max = 100) {
+rescale <- function(values, new_min = 10, new_max = 50) {
   if (all(is.na(values))) {
     return(values)
   }
