@@ -26,6 +26,7 @@ Description: Utilities for interacting with the pathogensurveillance pipeline.
   package to generate most of the figures and tables in the output reports, allowing
   users to generate more customized versions of these when needed.
 License: MIT + file LICENSE
+Remotes: github::grunwaldlab/heattree
 Imports:
   ape,
   ggtree,
@@ -51,10 +52,11 @@ Imports:
   webshot2,
   xml2,
   yaml,
-  RcppSimdJson
+  RcppSimdJson,
+  heattree
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Suggests: 
     testthat (>= 3.0.0)

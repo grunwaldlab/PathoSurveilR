@@ -1,9 +1,8 @@
 # 0.4.2
 
-## Bug fixes
+## Improvements
 
-- Fixed bug in `plot_tree` where subtrees got repeated 
-
+- Replaced tree plotting functionality with `heattree`
 
 # 0.4.1
 

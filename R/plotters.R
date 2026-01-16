@@ -28,10 +28,8 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
   if (! is.null(path)) {
     sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
     ref_meta <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
-    tree <- find_ps_data(path, target = target)
-    collapse_by_tax <- sendsketch_parsed(path, only_best = TRUE, only_shared = TRUE, update_taxonomy = TRUE, simplify = TRUE)
-    rank_cols <- colnames(collapse_by_tax)[39:ncol(collapse_by_tax)]
-    collapse_by_tax <- collapse_by_tax[, c('sample_id', rank_cols), drop = FALSE]
+    tree <- find_ps_data(path, target = target, simplify = FALSE)
+    tree_path_data <- find_ps_paths(path, target = target, simplify = TRUE)
   } else {
     # If a single tree is supplied, convert to list
     if (inherits(tree, "phylo")) {
@@ -46,26 +44,57 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
   
 
   # Find which columns are used to provide colors to the trees, if any
+  sample_meta_subset <- sample_meta[, 'sample_id', drop = FALSE]
+  names(sample_meta_subset) <- 'id'
+  sample_meta_subset$name <- sample_meta$name
+  if ('description' %in% colnames(sample_meta) && any(sample_meta_subset$name != sample_meta$description)) {
+    sample_meta_subset$description <- sample_meta$description
+  }  
   ids_in_trees <- unique(unlist(lapply(tree, function(t) t$tip.label)))
   color_by_text <- as.character(sample_meta$color_by[sample_meta$sample_id %in% ids_in_trees])
   color_by_cols <- unique(unlist(strsplit(color_by_text, split = ';')))
   color_by_cols <- color_by_cols[!is.na(color_by_cols)]
-  color_by_col_names <- c(color_by_cols, 'Default')
-  color_by_cols <- c(as.list(color_by_cols), list(NULL))  # NULL ensures that the default color scheme is also used
-
-  # Plot one tree for each color_by column
-  tree_plots <- lapply(color_by_cols, function(color_by) {
-    plot_phylogeny(
-      tree,
-      sample_meta,
-      ref_meta,
-      color_by,
-      collapse_by_tax, 
-      interactive = interactive
-    )
+  if (length(color_by_cols) > 0) {
+    sample_meta_subset <- cbind(sample_meta_subset,  sample_meta[, color_by_cols, drop = FALSE])
+  }
+  ref_meta_subset <- ref_meta[, c('ref_id', 'ref_name', 'ref_description'), drop = FALSE]
+  colnames(ref_meta_subset) <- c('id', 'name', 'description')
+  ref_meta_subset <- as.data.frame(do.call(cbind, lapply(colnames(sample_meta_subset), function(col) {
+    if (col %in% colnames(ref_meta_subset)) {
+      return(ref_meta_subset[[col]])
+    } else {
+      return(rep(NA, nrow(ref_meta_subset)))
+    }
+  })))
+  colnames(ref_meta_subset) <- colnames(sample_meta_subset)
+  ref_meta_subset$`_Sample_type_` <- 'Reference' 
+  sample_meta_subset$`_Sample_type_` <- 'Sample'
+  metadata <- rbind(sample_meta_subset, ref_meta_subset)
+  metadata[] <- lapply(metadata, function(x) {
+    x[is.na(x)] <- ''
+    x
   })
-  names(tree_plots) <- color_by_col_names
-  return(tree_plots)
+  
+  # Name trees by path metadata (TODO: find more generic approach if possible.)
+  if (target == 'multigene_tree') {
+    names(tree) <- tree_path_data$cluster_id
+  } else if (target == 'variant_tree') {
+    # names(tree) <- tree_path_data$reference_id
+    names(tree) <- ref_meta$ref_name[match(tree_path_data$reference_id, ref_meta$ref_id)]
+  }
+  
+  # Remove the "Root" node label if present 
+  tree <- lapply(tree, function(t) {
+    t$node.label[t$node.label == "Root"] <- ''
+    return(t)
+  })
+  
+  heattree::heat_tree(
+    tree = tree,
+    metadata = list(metadata)[rep(1, length(tree))],
+    aesthetics = list(c('tipLabelColor' = '_Sample_type_', 'tipLabelText' = 'name'))[rep(1, length(tree))],
+    manualZoomAndPanEnabled = FALSE
+  )
 }
 
 
