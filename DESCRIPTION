@@ -29,7 +29,6 @@ License: MIT + file LICENSE
 Remotes: github::grunwaldlab/heattree
 Imports:
   ape,
-  ggtree,
   heatmaply,
   pheatmap,
   ggplot2,
