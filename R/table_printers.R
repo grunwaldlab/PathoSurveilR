@@ -280,7 +280,7 @@ make_best_match_table <- function(pairwise_matrix, sample_data, ref_data) {
       ref_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% ref_data$ref_id, drop = FALSE]
       if (! all(is.na(ref_samp_comp))) {
         best_ref_match_id <- colnames(ref_samp_comp)[which.max(ref_samp_comp)]
-        best_ref_match_value <- unname(unlist(ref_samp_comp[best_ref_match_id]))
+        best_ref_match_value <- unname(unlist(ref_samp_comp[id, best_ref_match_id]))
         best_ref_match_name <- ref_data$ref_name[ref_data$ref_id == best_ref_match_id]
       }
     } 
@@ -290,7 +290,7 @@ make_best_match_table <- function(pairwise_matrix, sample_data, ref_data) {
       samp_samp_comp <- pairwise_matrix[id, colnames(pairwise_matrix) %in% sample_ids & colnames(pairwise_matrix) != id, drop = FALSE]
       if (! all(is.na(samp_samp_comp))) {
         best_samp_match_id <- colnames(samp_samp_comp)[which.max(samp_samp_comp)]
-        best_samp_match_value <- unname(unlist(samp_samp_comp[best_samp_match_id]))
+        best_samp_match_value <- unname(unlist(samp_samp_comp[id, best_samp_match_id]))
         best_samp_match_name <- sample_data$name[sample_data$sample_id == best_samp_match_id]
       }
     } 

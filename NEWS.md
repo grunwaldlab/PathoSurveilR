@@ -1,3 +1,9 @@
+# 0.4.3
+
+## Bug fixes
+
+- Fixed NA values for ANI in `estimated_ani_match_table`
+
 # 0.4.2
 
 ## Improvements
