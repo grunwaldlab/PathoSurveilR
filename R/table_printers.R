@@ -5,7 +5,7 @@
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output or a table in the format of the
-#'   [sample_meta_parsed()] output.
+#'   [find_ps_data()] output.
 #' @param interactive Whether to use an HTML-based interactive format or not (default: TRUE)
 #' @param ... Passed to `DT::datatable`.
 #'

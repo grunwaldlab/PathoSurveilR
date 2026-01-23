@@ -13,7 +13,7 @@ sample_meta_table(input, interactive = FALSE, ...)
 
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output or a table in the format of the
-\code{\link[=sample_meta_parsed]{sample_meta_parsed()}} output.}
+\code{\link[=find_ps_data]{find_ps_data()}} output.}
 }
 \description{
 Selects columns in the sample metadata to print and format the result for

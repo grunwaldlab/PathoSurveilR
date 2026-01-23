@@ -1,3 +1,9 @@
+# 0.4.4
+
+## Bug fixes
+
+- Fixed invalid `ggtree` dependency error
+
 # 0.4.3
 
 ## Bug fixes
