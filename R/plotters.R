@@ -30,6 +30,17 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
     ref_meta <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
     tree <- find_ps_data(path, target = target, simplify = FALSE)
     tree_path_data <- find_ps_paths(path, target = target, simplify = TRUE)
+    
+    # Name trees by path metadata (TODO: find more generic approach if possible.)
+    if (target == 'multigene_tree') {
+      names(tree) <- tree_path_data$method
+      if (length(unique(tree_path_data$cluster_id)) > 1) {
+        names(tree) <- paste0(names(tree), '_', tree_path_data$cluster_id)
+      }
+    } else if (target == 'variant_tree') {
+      names(tree) <- ref_meta$ref_name[match(tree_path_data$reference_id, ref_meta$ref_id)]
+    }
+    
   } else {
     # If a single tree is supplied, convert to list
     if (inherits(tree, "phylo")) {
@@ -41,7 +52,6 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
   if (length(tree) == 0) {
     return(list())
   }
-  
 
   # Find which columns are used to provide colors to the trees, if any
   sample_meta_subset <- sample_meta[, 'sample_id', drop = FALSE]
@@ -74,14 +84,6 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
     x[is.na(x)] <- ''
     x
   })
-  
-  # Name trees by path metadata (TODO: find more generic approach if possible.)
-  if (target == 'multigene_tree') {
-    names(tree) <- tree_path_data$cluster_id
-  } else if (target == 'variant_tree') {
-    # names(tree) <- tree_path_data$reference_id
-    names(tree) <- ref_meta$ref_name[match(tree_path_data$reference_id, ref_meta$ref_id)]
-  }
   
   # Remove the "Root" node label if present 
   tree <- lapply(tree, function(t) {

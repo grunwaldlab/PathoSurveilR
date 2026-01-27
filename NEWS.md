@@ -1,3 +1,9 @@
+# 0.4.5
+
+## Bug fixes
+
+- Fixed both core and busco trees not being including in `plot_tree`
+
 # 0.4.4
 
 ## Bug fixes
