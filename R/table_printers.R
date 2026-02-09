@@ -271,8 +271,8 @@ pocp_match_table <- function(path, interactive = FALSE, ...) {
 #'
 #' @keywords internal
 make_best_match_table <- function(pairwise_matrix, sample_data, ref_data) {
-  sample_ids <- sample_data$sample_id[sample_data$sample_id %in% colnames(pairwise_matrix)]
-  ref_ids <- ref_data$ref_id[ref_data$ref_id %in% colnames(pairwise_matrix)]
+  sample_ids <- as.character(sample_data$sample_id[sample_data$sample_id %in% colnames(pairwise_matrix)])
+  ref_ids <- as.character(ref_data$ref_id[ref_data$ref_id %in% colnames(pairwise_matrix)])
   do.call(rbind, lapply(sample_ids, function(id) { # loop over sample IDs and combine results into a table
     best_ref_match_name <- NA
     best_ref_match_value <- NA

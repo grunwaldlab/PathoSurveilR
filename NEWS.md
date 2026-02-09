@@ -1,3 +1,9 @@
+# 0.4.6
+
+## Bug fixes
+
+- Fix bug in  `make_best_match_table` when using numeric sample IDs 
+
 # 0.4.5
 
 ## Bug fixes
