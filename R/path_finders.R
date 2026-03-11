@@ -297,7 +297,11 @@ split_path <- function(path) {
 #'
 #' @export
 print_ps_outputs <- function(outdir_path, exists = TRUE) {
+  
+  # Get known outputs and make table of unique targets
   desc_data <- known_ps_outputs(outdir_path, exists = exists)
+  desc_data <- desc_data[, c('target', 'name', 'description', 'category'), drop = FALSE]
+  desc_data <- unique(desc_data)
 
   # Get print text for each line
   desc_data$print_text <- paste0(

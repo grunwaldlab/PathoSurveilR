@@ -39,6 +39,70 @@ sample_meta_table <- function(input, interactive = FALSE, ...) {
 }
 
 
+#' Print a table of selected reference metadata
+#'
+#' Selects columns in the reference metadata to print and format the result for
+#' use as a static table in PDF or an interactive table in HTML.
+#'
+#' @param path The path to one or more folders that contain
+#'   pathogensurveillance output.
+#' @param target Either 'contextual_refs' or 'mapping_refs'
+#' @param interactive Whether to use an HTML-based interactive format or not (default: TRUE)
+#' @param ... Passed to `DT::datatable`.
+#'
+#' @examples
+#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
+#' reference_meta_table(path)
+#' reference_meta_table(path, interactive = TRUE)
+#'
+#' @export
+selected_ref_meta_table <- function(input, target, interactive = FALSE, ...) {
+
+  selected_ref_data <- find_ps_data(input, target = target, simplify = TRUE)
+  selected_ref_ids <- unique(selected_ref_data$reference_id)
+  
+  downloaded_ref_metadata <- find_ps_data(input, target = 'downloaded_ref_metadata', simplify = TRUE)
+  downloaded_ref_metadata <- downloaded_ref_metadata[match(selected_ref_ids, downloaded_ref_metadata$reference_id), , drop = FALSE]
+
+  reference_data <- find_ps_data(input, target = 'reference_metadata', simplify = TRUE)
+  reference_data <- reference_data[match(selected_ref_ids, reference_data$ref_id), , drop = FALSE]
+  colnames(reference_data)[colnames(reference_data) == 'ref_id'] <- 'reference_id'
+  
+  merged_data <- merge(by = "reference_id", reference_data, downloaded_ref_metadata)
+  
+  # Subset to desired columns
+  cols <- c(
+    reference_id = 'ID',
+    ref_name = 'Name',
+    ref_description = 'Description',
+    ref_ncbi_accession = 'NCBI ID',
+    assembly_level = 'Assembly quality',
+    hosts = 'Hosts',
+    tax_id = 'NCBI taxon ID',
+    contig_l50 = 'Assembly L50',
+    contig_n50 = 'Assembly N50',
+    coverage = 'Assembly coverage',
+    number_of_contigs = 'Contig count',
+    total_sequence_length = 'Assembly length',
+    is_type = 'Type strain',
+    checkm_completeness = 'Assembly completeness (%)',
+    checkm_contamination = 'Assembly contamination (%)'
+  )
+  merged_data <- merged_data[, colnames(merged_data) %in% names(cols)]
+  colnames(merged_data) <- cols
+  
+  # Print table
+  if (interactive) {
+    output <- DT::datatable(merged_data, class = "display nowrap", ...)
+    output <- DT::formatStyle(output, colnames(merged_data), "white-space" = "nowrap")
+  } else {
+    output <- print_static_table(merged_data)
+  }
+  
+  return(output)
+}
+
+
 #' Get table of pipeline status data
 #'
 #' Return a formatted interactive table with the data on the issues encountered
