@@ -1,7 +1,7 @@
 Package: PathoSurveilR
 Type: Package
 Title: Utilities for the pathogensurveillance pipeline
-Version: 0.4.2
+Version: 0.4.3
 Authors@R:
     c(person(given = "Zachary", 
              family = "Foster",
@@ -52,7 +52,8 @@ Imports:
   xml2,
   yaml,
   RcppSimdJson,
-  heattree
+  heattree,
+  metaMapWidgetR
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3

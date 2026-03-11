@@ -98,6 +98,29 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
 }
 
 
+
+#' Plot map widget
+#'
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
+#' @param def_size The default marker size-by variable
+#' @param def_color The default marker color-by variable.
+#' @param width The width of the widget.
+#' @param height The height of the widget.
+#' @param elementID Widget element ID.
+#'
+#' @return  A map plot.
+#'
+#' @export
+
+plot_map_widget <- function(path = NULL, width = NULL, height = NULL, elementID = NULL, def_size = '', def_color = '') {
+  if (!is.null(path)) {
+    sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
+    metaMapWidgetR::meta_map_widget(sample_meta, width, height, elementID, def_size, def_color)
+  } 
+}
+
+
 #' Plot MSN of variant data
 #'
 #' Plot a minimum spanning network for each group of samples aligned to a
