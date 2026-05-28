@@ -1,3 +1,10 @@
+# 0.4.7
+
+## Added
+
+- Added map plotting function
+- Added reference data table plotting function
+
 # 0.4.6
 
 ## Bug fixes
