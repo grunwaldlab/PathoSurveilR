@@ -3,3 +3,5 @@
 README.Rmd
 README_files
 images
+^\.positai$
+^\.claude$
