@@ -417,6 +417,17 @@ parse_ref_list <- function(path) {
   )
 }
 
+#' @keywords internal
+parse_sample_ref_list <- function(path) {
+  output <- utils::read.table(
+    path,
+    header = FALSE,
+    sep = '\t',
+    comment.char = '',
+    col.names = c('sample_id', 'reference_id')
+  )
+  tibble::as_tibble(output)
+}
 
 #' @keywords internal
 parse_sendsketch <- function(path) {

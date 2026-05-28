@@ -52,7 +52,8 @@ Imports:
   xml2,
   yaml,
   RcppSimdJson,
-  heattree
+  heattree,
+  metaMapWidgetR
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
