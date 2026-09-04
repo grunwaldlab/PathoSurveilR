@@ -452,6 +452,19 @@ parse_matrix_tsv <- function(path) {
   return(mat)
 }
 
+#' @keywords internal
+parse_ani_csv <- function(path) {
+  csv <- utils::read.table(path, header = TRUE, sep = ',', comment.char = '')
+  all_names <- sort(unique(c(csv$query_name, csv$match_name)))
+  ani_matrix <- matrix(0, nrow = length(all_names), ncol = length(all_names),
+                      dimnames = list(all_names, all_names))
+  ani_matrix[cbind(csv$query_name, csv$match_name)] <- csv$average_containment_ani
+  ani_matrix[lower.tri(ani_matrix)] <- t(ani_matrix)[lower.tri(ani_matrix)]
+  diag(ani_matrix) <- 1
+  ani_matrix[ani_matrix == 0] <- NA
+  return(ani_matrix)
+}
+
 
 #' @keywords internal
 parse_tree <- function(path) {

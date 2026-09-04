@@ -1,3 +1,9 @@
+# 0.4.8
+
+## Added
+
+- Added parser to accommodate long to wide ANI matrix conversion 
+
 # 0.4.7
 
 ## Added
