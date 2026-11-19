@@ -46,8 +46,8 @@ sendsketch_parsed(path)
 
 }
 \seealso{
-Other parsers: 
-\code{\link{sendsketch_taxa_present}()},
-\code{\link{sendsketch_taxonomy_parsed}()}
+Other parsers:
+\code{\link[=sendsketch_taxa_present]{sendsketch_taxa_present()}},
+\code{\link[=sendsketch_taxonomy_parsed]{sendsketch_taxonomy_parsed()}}
 }
 \concept{parsers}

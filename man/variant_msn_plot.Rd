@@ -2,23 +2,29 @@
 % Please edit documentation in R/plotters.R
 \name{variant_msn_plot}
 \alias{variant_msn_plot}
-\title{Plot MSN of variant data}
+\title{Plot an interactive MSN of variant data}
 \usage{
-variant_msn_plot(path, combine = TRUE)
+variant_msn_plot(path, interactive = TRUE)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
 pathogensurveillance output.}
 
-\item{combine}{If \code{TRUE} combine multiple MSNs into a single figure and
-return a single figure. If \code{FALSE}, return a list of figures.}
+\item{interactive}{Whether to return an interactive HTML widget. Static MSN
+plots are not currently supported.}
+}
+\value{
+An interactive \code{msnwidgetR} widget, or \code{NULL} when no alignments
+contain at least two samples after removing their reference sequence.
 }
 \description{
 Plot a minimum spanning network for each group of samples aligned to a
-reference found in \code{pathogensurveillance} output.
+reference found in \code{pathogensurveillance} output. The network controls and
+metadata coloring are provided by \code{msnwidgetR}.
 }
 \examples{
-path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
-variant_msn_plot(path)
+\dontrun{
+variant_msn_plot("path/to/pathogensurveillance/output", interactive = TRUE)
+}
 
 }

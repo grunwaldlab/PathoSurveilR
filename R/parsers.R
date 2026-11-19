@@ -437,6 +437,47 @@ parse_sendsketch <- function(path) {
 
 
 #' @keywords internal
+parse_ani_csv <- function(path) {
+  pairwise <- utils::read.csv(path, check.names = FALSE, comment.char = "")
+  required_columns <- c("query_name", "match_name", "average_containment_ani")
+  missing_columns <- setdiff(required_columns, names(pairwise))
+  if (length(missing_columns)) {
+    stop(
+      "ANI pairwise CSV is missing required columns: ",
+      paste(missing_columns, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  query_names <- as.character(pairwise$query_name)
+  match_names <- as.character(pairwise$match_name)
+  ani_values <- suppressWarnings(as.numeric(pairwise$average_containment_ani))
+  valid_names <- !is.na(query_names) & !is.na(match_names) & nzchar(query_names) &
+    nzchar(match_names)
+  all_names <- sort(unique(c(query_names[valid_names], match_names[valid_names])))
+  if (!length(all_names)) {
+    stop("ANI pairwise CSV contains no valid comparisons.", call. = FALSE)
+  }
+  valid_values <- valid_names & is.finite(ani_values)
+  query_names <- query_names[valid_values]
+  match_names <- match_names[valid_values]
+  ani_values <- ani_values[valid_values]
+
+  ani_matrix <- matrix(
+    0,
+    nrow = length(all_names),
+    ncol = length(all_names),
+    dimnames = list(all_names, all_names)
+  )
+  ani_matrix[cbind(match(query_names, all_names), match(match_names, all_names))] <- ani_values
+  ani_matrix[lower.tri(ani_matrix)] <- t(ani_matrix)[lower.tri(ani_matrix)]
+  diag(ani_matrix) <- 1
+  ani_matrix[ani_matrix == 0] <- NA_real_
+  ani_matrix
+}
+
+
+#' @keywords internal
 parse_matrix_csv <- function(path) {
   mat <- as.matrix(utils::read.table(path, sep = ',', check.names = FALSE, header = TRUE))
   rownames(mat) <- colnames(mat)
@@ -525,6 +566,4 @@ parse_ncbi_assembly_metadata <- function(path = NULL) {
   
   tibble::as_tibble(assem_data)
 }
-
-
 

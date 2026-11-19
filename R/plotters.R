@@ -123,166 +123,97 @@ plot_map_widget <- function(path = NULL, width = NULL, height = NULL, elementID 
 }
 
 
-#' Plot MSN of variant data
+#' Plot an interactive MSN of variant data
 #'
 #' Plot a minimum spanning network for each group of samples aligned to a
-#' reference found in `pathogensurveillance` output.
+#' reference found in `pathogensurveillance` output. The network controls and
+#' metadata coloring are provided by `msnwidgetR`.
 #'
 #' @param path The path to one or more folders that contain
 #'   pathogensurveillance output.
-#' @param combine If `TRUE` combine multiple MSNs into a single figure and
-#'   return a single figure. If `FALSE`, return a list of figures.
+#' @param interactive Whether to return an interactive HTML widget. Static MSN
+#'   plots are not currently supported.
+#'
+#' @return An interactive `msnwidgetR` widget, or `NULL` when no alignments
+#'   contain at least two samples after removing their reference sequence.
 #'
 #' @examples
-#' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
-#' variant_msn_plot(path)
+#' \dontrun{
+#' variant_msn_plot("path/to/pathogensurveillance/output", interactive = TRUE)
+#' }
 #'
 #' @export
-variant_msn_plot <- function(path, combine = TRUE) {
-  align_data <- find_ps_paths(path, target = 'variants_fasta')
-  alignments <- find_ps_data(path, target = 'variants_fasta')
-  sample_data <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
-  ref_data <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
+variant_msn_plot <- function(path, interactive = TRUE) {
+  if (!isTRUE(interactive)) {
+    stop("Static MSN plots are not supported; use `interactive = TRUE`.", call. = FALSE)
+  }
 
-  # Find which columns are used to provide colors to the trees, if any
-  ids_used <- unique(unlist(lapply(alignments, function(a) {
-    if (is.null(a)) {
-      return(character(0))
-    } else {
-      return(rownames(a))
-    }
-  })))
-  color_by_text <- as.character(sample_data$color_by[sample_data$sample_id %in% ids_used])
-  color_by_cols <- unique(unlist(strsplit(color_by_text, split = ';')))
-  color_by_cols <- color_by_cols[! is.na(color_by_cols)]
-  color_by_col_names <- c(color_by_cols, 'Default')
-  color_by_cols <- c(as.list(color_by_cols), list(NULL))  # NULL ensures that the default color scheme is also used
-
-  # Plot MSNs
-  graphics::plot.new()
-  output <- lapply(seq_len(nrow(align_data)), function(i) {
-    align_without_ref <- alignments[[i]][rownames(alignments[[i]]) != align_data$reference_id[i], ]
-    if (is.null(align_without_ref)) {
-      return(NULL)
-    }
-    plot_data <- make_MSN(align_without_ref, sample_data, user_seed = 1, snp_diff_prop = 0.1, population = NULL)
-    if (is.null(plot_data)) {
-      return(NULL)
-    }
-    out <- grDevices::recordPlot()
-    graphics::plot.new()
-    return(out)
-  })
-
-  return(output)
-}
-
-
-#' Make Minimum spanning network
-#'
-#' @param snp_fasta_alignment A DNA alignment in fasta format.
-#' @param sample_data A data frame containing information about samples.
-#' @param population A character string specifying the column name in sample_data to be used for stratification.
-#' @param interactive A logical value indicating whether Whether or not to produce an interactive HTML/javascript-based figures or tables or a static ones.
-#' @param snp_threshold An integer specifying the number of SNPs to be used as the threshold for filtering. User can specify whole numbers or alternatively, a relative proportion using 'snp_diff_prop', but not both. Default is NULL.
-#' @param snp_diff_prop A numeric value specifying the proportion of SNPs to be used as the threshold for filtering. If user prefers to specify whole numbers, use 'snp_threshold' instead. Default is NULL.
-#' @param use_cutoff_predictor A logical value indicating whether to use cutoff predictor for determining SNP threshold.
-#' @param show_MLG_table A logical value indicating whether to display a table of multi-locus genotypes.
-#' @param user_seed An optional integer specifying the seed for reproducibility.
-#' @param ... Additional arguments to be passed to internal functions.
-#' @return Minimum spanning network
-#'
-#' @keywords internal
-make_MSN <- function(snp_fasta_alignment, sample_data, population = NULL, interactive = FALSE, snp_threshold = NULL, snp_diff_prop = NULL, use_cutoff_predictor = FALSE, show_MLG_table = FALSE, user_seed = NULL, ...) {
-
-  set.seed(user_seed)
-  snp_aln.gi <- adegenet::DNAbin2genind(snp_fasta_alignment)
-  if (is.null(snp_aln.gi)) {
+  alignment_paths <- find_ps_paths(
+    path,
+    target = "variants_fasta",
+    simplify = TRUE,
+    must_exist = FALSE
+  )
+  if (is.null(alignment_paths) || nrow(alignment_paths) == 0L) {
     return(NULL)
   }
-  snp_genclone <- poppr::as.genclone(snp_aln.gi)
 
-  if (use_cutoff_predictor) {
-    snpdist_stats <- poppr::filter_stats(snp_genclone)
-    average_thresh <- poppr::cutoff_predictor(snpdist_stats$average$THRESHOLDS)
-    poppr::mlg.filter(snp_genclone, distance = poppr::bitwise.dist, percent = TRUE) <- average_thresh
-  } else if (!is.null(snp_threshold)) {
-    poppr::mlg.filter(snp_genclone, distance = poppr::bitwise.dist, percent = FALSE) <- snp_threshold
-  } else if (!is.null(snp_diff_prop)) {
-    poppr::mlg.filter(snp_genclone, distance = poppr::bitwise.dist, percent = TRUE) <- snp_diff_prop
-  }
+  alignments <- find_ps_data(path, target = "variants_fasta")
+  sample_data <- find_ps_data(path, target = "sample_metadata", simplify = TRUE)
+  reference_data <- find_ps_data(path, target = "reference_metadata", simplify = TRUE)
 
-  if (is.null(population)) {
-    sample_data$no_factor_provided <- 'Sample (No factor provided)'
-    population <- 'no_factor_provided'
-  }
+  datasets <- lapply(seq_len(nrow(alignment_paths)), function(i) {
+    alignment_path <- alignment_paths$path[i]
+    alignment <- alignments[[alignment_path]]
+    if (is.null(alignment) || !length(alignment)) {
+      return(NULL)
+    }
 
-  sample_data <- sample_data[sample_data$sample_id %in% rownames(snp_fasta_alignment), , drop = FALSE]
-  user_factor <- sample_data[[population]]
-  node_color <- as.factor(ifelse(is.na(user_factor) | user_factor == "", "Unknown", user_factor))
-  myColors <- grDevices::rainbow(length(unique(node_color)))
-  names(myColors) <- levels(node_color)
-  num_columns <- ncol(sample_data)
-  adegenet::strata(snp_genclone) <- cbind(sample_data[, c(1:num_columns)], color_node_by = node_color)
-  adegenet::setPop(snp_genclone) <- ~color_node_by
+    reference_id <- as.character(alignment_paths$reference_id[i])
+    alignment_ids <- rownames(alignment)
+    sample_rows <- !is.na(alignment_ids) & alignment_ids != reference_id
+    alignment <- alignment[sample_rows, , drop = FALSE]
+    alignment_ids <- alignment_ids[sample_rows]
+    if (length(alignment_ids) < 2L) {
+      return(NULL)
+    }
 
-  if (!is.null(snp_threshold)) {
-    ms.loc <- poppr::poppr.msn(snp_genclone,
-                               distmat = poppr::bitwise.dist(snp_genclone, percent = FALSE),
-                               include.ties = TRUE,
-                               showplot = FALSE)
-  }
-  else {
-    ms.loc <- poppr::poppr.msn(snp_genclone,
-                               distmat = poppr::bitwise.dist(snp_genclone, percent = TRUE),
-                               include.ties = TRUE,
-                               showplot = FALSE)
-  }
+    alignment <- as.character(alignment)
+    sequences <- apply(alignment, 1L, paste0, collapse = "")
 
-  the_edges <- igraph::E(ms.loc$graph)$weight
-  edges <- as.list(the_edges)
+    metadata <- data.frame(id = alignment_ids, stringsAsFactors = FALSE)
+    if (!is.null(sample_data) && "sample_id" %in% names(sample_data)) {
+      sample_rows <- match(alignment_ids, as.character(sample_data$sample_id))
+      metadata <- as.data.frame(sample_data[sample_rows, , drop = FALSE])
+      metadata$sample_id <- NULL
+      metadata$id <- alignment_ids
+      metadata <- metadata[, c("id", setdiff(names(metadata), "id")), drop = FALSE]
+    }
 
-  if (length(igraph::V(ms.loc$graph)) > 1) {
-    output <- poppr::plot_poppr_msn(
-      snp_genclone,
-      poppr_msn = ms.loc,
-      palette = myColors,
-      mlg = FALSE,
-      quantiles = FALSE,
-      wscale = FALSE,
-      inds = "None",
-      ...
+    reference_name <- if (
+      !is.null(reference_data) &&
+        all(c("ref_id", "ref_name") %in% names(reference_data))
+    ) {
+      reference_data$ref_name[match(reference_id, reference_data$ref_id)]
+    } else {
+      NA_character_
+    }
+    if (is.na(reference_name) || !nzchar(reference_name)) {
+      reference_name <- reference_id
+    }
+
+    list(
+      name = paste0(reference_name, " (", reference_id, ")"),
+      fasta = paste(paste0(">", alignment_ids, "\n", sequences), collapse = "\n"),
+      metadata = metadata
     )
-  } else {
-    output <- ggplot2::ggplot() +
-      ggplot2::annotate("text", x = 4, y = 25, size=8, label = "All samples are in the same multilocus genotype.") +
-      ggplot2::theme_void()
+  })
+  datasets <- Filter(Negate(is.null), datasets)
+  if (!length(datasets)) {
+    return(NULL)
   }
 
-
-  # if (show_MLG_table) {
-  #   idlist <- mlg.id(snp_genclone)
-  #   mlglist <- data.frame("MLG", "strain")
-  #   colnames(mlglist) <- c("V1", "V2")
-  #
-  #   for (name in names(idlist)) {
-  #     newframe <- as.data.frame(cbind(paste0("MLG", "_", name), idlist[[name]]))
-  #     mlglist <- rbind(mlglist, newframe)
-  #   }
-  #
-  #   colnames(mlglist) <- c("Multi-locus genotype", "Strain")
-  #   mlglist <- mlglist[mlglist$Strain != "strain",]
-  #
-  #   if (interactive) {
-  #     DT::datatable(mlglist, class = "display nowrap", ...) %>%
-  #       formatStyle(colnames(mlglist), "white-space" = "nowrap")
-  #
-  #   } else {
-  #     print(mlglist)
-  #   }
-  # }
-
-  return(output)
+  msnwidgetR::msnwidget(datasets = datasets)
 }
 
 
@@ -295,8 +226,8 @@ make_MSN <- function(snp_fasta_alignment, sample_data, population = NULL, intera
 #'   output or paths to tree files.
 #' @param combine If `TRUE`, combine data from all ANI matrices found into a
 #'   single plot.
-#' @param interactive Whether to use an HTML-based interactive format or not
-#'   (default: TRUE)
+#' @param interactive Whether to return an HTML-based interactive widget
+#'   (default: FALSE)
 #' @param max_size The maximum number of rows/columns to plot. To subset the
 #'   data to this amount when needed, references most similar to the samples
 #'   will be used. If there are more samples than this, then only samples will
@@ -312,8 +243,8 @@ make_MSN <- function(snp_fasta_alignment, sample_data, population = NULL, intera
 #' @param font_size Size of text used for labels
 #' @param max_label_length Labels longer than this length will be shortened.
 #'
-#' @return  A list of plots, unless `combine` is used, in which case a single
-#'   plot is returned.
+#' @return An interactive HTML widget when `interactive = TRUE`, otherwise a
+#'   static heatmap.
 #'
 #' @examples
 #' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
@@ -365,7 +296,8 @@ estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, ma
   
   make_heatmap(input_matrix = input_matrix, sample_data = sample_meta, ref_data = ref_meta,
                interactive = interactive, height = height, width = width, dpi = dpi,
-               font_size = font_size, max_label_length = max_label_length)
+               font_size = font_size, max_label_length = max_label_length,
+               metric = "ani")
 }
 
 
@@ -378,8 +310,8 @@ estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, ma
 #'   output or paths to tree files.
 #' @param combine If `TRUE`, combine data from all POCP matrices found into a
 #'   single plot.
-#' @param interactive Whether to use an HTML-based interactive format or not
-#'   (default: TRUE)
+#' @param interactive Whether to return an HTML-based interactive widget
+#'   (default: FALSE)
 #' @param height The height in pixels. If not `interactive`, this is divided by
 #'   `dpi` to convert it to inches.
 #' @param width The width in pixels. If not `interactive`, this is divided by
@@ -388,8 +320,8 @@ estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, ma
 #' @param font_size Size of text used for labels
 #' @param max_label_length Labels longer than this length will be shortened.
 #'
-#' @return  A list of plots, unless `combine` is used, in which case a single
-#'   plot is returned.
+#' @return An interactive HTML widget when `interactive = TRUE`, otherwise a
+#'   static heatmap.
 #'
 #' @examples
 #' path <- system.file('extdata/ps_output', package = 'PathoSurveilR')
@@ -405,13 +337,14 @@ pocp_heatmap <- function(path, combine = FALSE, interactive = FALSE,
   }
 
   # Find and parse data
-  input_matrix <- find_ps_data(path, target = 'ani_matrix_csv', simplify = TRUE)
+  input_matrix <- find_ps_data(path, target = 'pocp', simplify = TRUE)
   sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
   ref_meta <- find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
   
   make_heatmap(input_matrix = input_matrix, sample_data = sample_meta, ref_data = ref_meta,
                interactive = interactive, height = height, width = width, dpi = dpi,
-               font_size = font_size, max_label_length = max_label_length)
+               font_size = font_size, max_label_length = max_label_length,
+               metric = "pocp")
 }
 
 
@@ -420,66 +353,122 @@ pocp_heatmap <- function(path, combine = FALSE, interactive = FALSE,
 #'
 #' The heatmap is based on a distance matrix
 #'
-#' @param input_matrix Approximate ANI matrix output from Sourmash analysis
+#' @param input_matrix A square similarity matrix
 #' @param sample_data A tibble/data.frame with the sample metadata
 #' @param ref_data A tibble/data.frame with information on references used in analysis
-#' @param interactive Whether to use an HTML-based interactive format or not (default: TRUE)
+#' @param interactive Whether to return an HTML-based interactive widget (default: FALSE)
 #' @param height The height in pixels. If not `interactive`, this is divided by `dpi` to convert it to inches.
 #' @param width The width in pixels. If not `interactive`, this is divided by `dpi` to convert it to inches.
 #' @param dpi How pixels are converted to inches
 #' @param font_size Size of text used for labels
-#' @param max_label_length Labels longer than this length will be shortened.
+#' @param max_label_length Labels longer than this length will be shortened for display.
+#' @param metric Similarity metric used to label the interactive widget.
 #'
-#' @return A heatmap with dendrogram
+#' @return An interactive HTML widget when `interactive = TRUE`, otherwise a
+#'   static heatmap.
 #'
 #' @keywords internal
 make_heatmap <- function(input_matrix, ref_data, sample_data, interactive = FALSE,
                          height = NULL, width = NULL, dpi = 100, font_size = 10,
-                         max_label_length = 30) {
-  # Rename rows/columns for plotting
-  name_key <- c(
-    stats::setNames(ref_data$ref_name, ref_data$ref_id),
-    stats::setNames(sample_data$name, sample_data$sample_id)
-  )
-  name_key <- ifelse(nchar(name_key) > max_label_length,
-                     paste0(substr(name_key, start = 1, stop = max_label_length), '\u2026'),
-                     name_key)
-  name_key <- stats::setNames(make.unique(name_key, sep = ' '), names(name_key))
-  colnames(input_matrix) <- name_key[colnames(input_matrix)]
-  rownames(input_matrix) <- name_key[rownames(input_matrix)]
-  na_to_zero <- input_matrix
-  na_to_zero[is.na(na_to_zero)] <- 0
-  clustered <- stats::hclust(stats::dist(na_to_zero), method = "complete")
-  if (interactive) {
-    dist_func <- function(x) {
-      return(clustered)
-    }
-    output <- heatmaply::heatmaply(input_matrix,
-                                   fontsize_row = font_size, fontsize_col = font_size,
-                                   width = width, height = height,
-                                   hclustfun = function(x) {clustered},
-                                   distfun  = function(x) {stats::dist(na_to_zero)},
-                                   grid_color = '#EEEEEE')
-  } else {
-    if (is.null(width)) {
-      width <- NA
-    } else {
-      width <- width / dpi
-    }
-    if (is.null(height)) {
-      height <- NA
-    } else {
-      height <- height / dpi
-    }
-    output <- pheatmap::pheatmap(input_matrix,
-                                 cluster_rows = clustered,
-                                 cluster_cols = clustered,
-                                 angle_col = 45,
-                                 show_rownames = TRUE, labels_row = colnames(input_matrix),
-                                 fontsize_row = font_size, fontsize_col = font_size,
-                                 width = width, height = height)
+                         max_label_length = 30, metric = c("ani", "pocp")) {
+  metric <- match.arg(metric)
+  input_matrix <- as.matrix(input_matrix)
+  storage.mode(input_matrix) <- "numeric"
+  observed_values <- input_matrix[is.finite(input_matrix)]
+  if (metric == "ani" && length(observed_values) && max(observed_values) <= 1) {
+    input_matrix <- input_matrix * 100
   }
-  return(output)
+  if (nrow(input_matrix) != ncol(input_matrix)) {
+    stop("The similarity matrix must be square.", call. = FALSE)
+  }
+  if (is.null(rownames(input_matrix)) || is.null(colnames(input_matrix))) {
+    stop("The similarity matrix must have row and column names.", call. = FALSE)
+  }
+  if (!setequal(rownames(input_matrix), colnames(input_matrix))) {
+    stop("The matrix row and column names must contain the same identifiers.", call. = FALSE)
+  }
+  if (!identical(rownames(input_matrix), colnames(input_matrix))) {
+    input_matrix <- input_matrix[rownames(input_matrix), rownames(input_matrix), drop = FALSE]
+  }
+
+  name_key <- c(
+    if (!is.null(ref_data) && nrow(ref_data) && all(c("ref_id", "ref_name") %in% names(ref_data))) {
+      stats::setNames(as.character(ref_data$ref_name), as.character(ref_data$ref_id))
+    },
+    if (!is.null(sample_data) && nrow(sample_data) && all(c("sample_id", "name") %in% names(sample_data))) {
+      stats::setNames(as.character(sample_data$name), as.character(sample_data$sample_id))
+    }
+  )
+  ids <- rownames(input_matrix)
+  full_labels <- if (length(name_key)) {
+    unname(name_key[ids])
+  } else {
+    rep(NA_character_, length(ids))
+  }
+  missing_names <- is.na(full_labels) | full_labels == ""
+  full_labels[missing_names] <- ids[missing_names]
+  duplicated_names <- duplicated(full_labels) | duplicated(full_labels, fromLast = TRUE)
+  full_labels[duplicated_names] <- paste0(full_labels[duplicated_names], " (", ids[duplicated_names], ")")
+  label_limit <- max(1L, as.integer(max_label_length))
+  display_labels <- ifelse(
+    nchar(full_labels) > label_limit,
+    paste0(substr(full_labels, 1L, label_limit), "\u2026"),
+    full_labels
+  )
+  display_labels <- make.unique(display_labels, sep = " ")
+  sample_ids <- if (!is.null(sample_data) && "sample_id" %in% names(sample_data)) {
+    intersect(ids, as.character(sample_data$sample_id))
+  } else {
+    character()
+  }
+  if (interactive) {
+    metric_label <- if (metric == "ani") "Estimated ANI similarity (%)" else "Percentage of conserved proteins (%)"
+    matrix_payload <- lapply(seq_len(nrow(input_matrix)), function(row) {
+      lapply(seq_len(ncol(input_matrix)), function(column) {
+        value <- input_matrix[row, column]
+        if (length(value) == 0L || is.na(value) || !is.finite(value)) NULL else unname(value)
+      })
+    })
+    return(htmlwidgets::createWidget(
+      name = "psHeatmap",
+      x = list(
+        labels = ids,
+        display_labels = unname(display_labels),
+        full_labels = unname(full_labels),
+        sample_ids = unname(sample_ids),
+        matrix = matrix_payload,
+        metric = metric,
+        metric_label = metric_label,
+        font_size = min(14, max(4, as.numeric(font_size)))
+      ),
+      width = width,
+      height = height,
+      package = "PathoSurveilR",
+      sizingPolicy = htmlwidgets::sizingPolicy(
+        defaultWidth = if (is.null(width)) 950 else width,
+        defaultHeight = if (is.null(height)) 850 else height,
+        viewer.fill = TRUE,
+        browser.fill = TRUE,
+        padding = 0
+      )
+    ))
+  }
+
+  width_inches <- if (is.null(width)) NA_real_ else width / dpi
+  height_inches <- if (is.null(height)) NA_real_ else height / dpi
+  na_to_zero <- input_matrix
+  na_to_zero[!is.finite(na_to_zero)] <- NA_real_
+  na_to_zero[is.na(na_to_zero)] <- 0
+  dimnames(input_matrix) <- list(display_labels, display_labels)
+  stats::hclust(stats::dist(na_to_zero), method = "complete") -> clustered
+  pheatmap::pheatmap(input_matrix,
+                     cluster_rows = clustered,
+                     cluster_cols = clustered,
+                     angle_col = 45,
+                     show_rownames = TRUE, labels_row = display_labels,
+                     labels_col = display_labels,
+                     fontsize_row = font_size, fontsize_col = font_size,
+                     width = width_inches, height = height_inches)
 }
 
 

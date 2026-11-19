@@ -13,17 +13,18 @@ make_heatmap(
   width = NULL,
   dpi = 100,
   font_size = 10,
-  max_label_length = 30
+  max_label_length = 30,
+  metric = c("ani", "pocp")
 )
 }
 \arguments{
-\item{input_matrix}{Approximate ANI matrix output from Sourmash analysis}
+\item{input_matrix}{A square similarity matrix}
 
 \item{ref_data}{A tibble/data.frame with information on references used in analysis}
 
 \item{sample_data}{A tibble/data.frame with the sample metadata}
 
-\item{interactive}{Whether to use an HTML-based interactive format or not (default: TRUE)}
+\item{interactive}{Whether to return an HTML-based interactive widget (default: FALSE)}
 
 \item{height}{The height in pixels. If not \code{interactive}, this is divided by \code{dpi} to convert it to inches.}
 
@@ -33,10 +34,13 @@ make_heatmap(
 
 \item{font_size}{Size of text used for labels}
 
-\item{max_label_length}{Labels longer than this length will be shortened.}
+\item{max_label_length}{Labels longer than this length will be shortened for display.}
+
+\item{metric}{Similarity metric used to label the interactive widget.}
 }
 \value{
-A heatmap with dendrogram
+An interactive HTML widget when \code{interactive = TRUE}, otherwise a
+static heatmap.
 }
 \description{
 The heatmap is based on a distance matrix

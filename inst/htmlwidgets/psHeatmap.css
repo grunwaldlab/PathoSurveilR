@@ -1,0 +1,40 @@
+.ani-heatmap {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  color: #202124;
+  font: 13px/1.35 system-ui, sans-serif;
+}
+
+.ani-heatmap svg {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.ani-heatmap-label {
+  cursor: pointer;
+}
+
+.ani-heatmap-controls button:focus-visible,
+.ani-heatmap-controls input:focus-visible,
+.ani-heatmap-label:focus-visible {
+  outline: 2px solid #2457c5;
+  outline-offset: 2px;
+}
+
+.ani-heatmap-tooltip {
+  position: absolute;
+  z-index: 3;
+  max-width: min(360px, calc(100% - 16px));
+  padding: 6px 8px;
+  border: 1px solid #737373;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.97);
+  color: #171717;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font: 12px/1.35 system-ui, sans-serif;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}

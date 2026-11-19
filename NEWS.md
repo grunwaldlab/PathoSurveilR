@@ -1,3 +1,15 @@
+# 0.4.9
+
+## Improvements
+
+- Replaced interactive ANI and POCP heatmaps with a bundled, offline-capable widget.
+- Added browser-side hierarchical clustering and synchronized dendrograms to interactive heatmaps.
+- Use `msnwidgetR` for interactive variant minimum spanning networks.
+
+## Bug fixes
+
+- Restore parsing for long-format ANI pairwise CSV output.
+
 # 0.4.7
 
 ## Added
@@ -48,4 +60,3 @@
 - Replaced the `subset` option with `max_size` and `prefer_contextual` parameters for better control
 - Improved error messages in `find_ps_paths()` function
 - Enhanced output metadata handling with name and description fallbacks
-

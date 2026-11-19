@@ -35,8 +35,8 @@ Return which taxa are predicted to be present given sendsketch results
 associated with directory paths containing \code{pathogensurveillance} output.
 }
 \seealso{
-Other parsers: 
-\code{\link{sendsketch_parsed}()},
-\code{\link{sendsketch_taxonomy_parsed}()}
+Other parsers:
+\code{\link[=sendsketch_parsed]{sendsketch_parsed()}},
+\code{\link[=sendsketch_taxonomy_parsed]{sendsketch_taxonomy_parsed()}}
 }
 \concept{parsers}

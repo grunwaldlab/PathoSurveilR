@@ -302,7 +302,7 @@ estimated_ani_match_table <- function(path, interactive = FALSE, ...) {
 pocp_match_table <- function(path, interactive = FALSE, ...) {
   # Get best match table
   output <- make_best_match_table(
-    pairwise_matrix = find_ps_data(path, target = 'ani_matrix_csv', simplify = TRUE),
+    pairwise_matrix = find_ps_data(path, target = 'pocp', simplify = TRUE),
     sample_data = find_ps_data(path, target = 'sample_metadata', simplify = TRUE),
     ref_data = find_ps_data(path, target = 'reference_metadata', simplify = TRUE)
   )

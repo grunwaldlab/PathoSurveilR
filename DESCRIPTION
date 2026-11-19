@@ -1,7 +1,7 @@
 Package: PathoSurveilR
 Type: Package
 Title: Utilities for the pathogensurveillance pipeline
-Version: 0.4.6
+Version: 0.4.9
 Authors@R:
     c(person(given = "Zachary", 
              family = "Foster",
@@ -26,7 +26,9 @@ Description: Utilities for interacting with the pathogensurveillance pipeline.
   package to generate most of the figures and tables in the output reports, allowing
   users to generate more customized versions of these when needed.
 License: MIT + file LICENSE
-Remotes: github::grunwaldlab/heattree
+Remotes:
+  github::grunwaldlab/heattree,
+  github::grunwaldlab/msnwidgetR
 Imports:
   ape,
   heatmaply,
@@ -34,15 +36,13 @@ Imports:
   ggplot2,
   phytools,
   ggnewscale,
-  adegenet,
   DT,
   base64enc,
   htmlwidgets,
-  igraph,
   kableExtra,
   lubridate,
   plotly,
-  poppr,
+  msnwidgetR,
   readODS,
   readxl,
   rentrez,
@@ -56,8 +56,8 @@ Imports:
   metaMapWidgetR
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.1

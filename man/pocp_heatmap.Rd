@@ -22,8 +22,8 @@ output or paths to tree files.}
 \item{combine}{If \code{TRUE}, combine data from all POCP matrices found into a
 single plot.}
 
-\item{interactive}{Whether to use an HTML-based interactive format or not
-(default: TRUE)}
+\item{interactive}{Whether to return an HTML-based interactive widget
+(default: FALSE)}
 
 \item{height}{The height in pixels. If not \code{interactive}, this is divided by
 \code{dpi} to convert it to inches.}
@@ -38,8 +38,8 @@ single plot.}
 \item{max_label_length}{Labels longer than this length will be shortened.}
 }
 \value{
-A list of plots, unless \code{combine} is used, in which case a single
-plot is returned.
+An interactive HTML widget when \code{interactive = TRUE}, otherwise a
+static heatmap.
 }
 \description{
 Plot POCP matrix with dendrogram from data present in the output of a

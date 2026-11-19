@@ -1,0 +1,6 @@
+dependencies:
+  - name: ps-heatmap
+    version: 1.0.0
+    src: htmlwidgets
+    script: psHeatmap.js
+    stylesheet: psHeatmap.css
