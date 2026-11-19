@@ -64,6 +64,11 @@ test_that("variant MSN widgets include named FASTA datasets and matching metadat
   widget <- variant_msn_plot(path, interactive = TRUE)
 
   expect_s3_class(widget, "msnwidget")
+  expect_null(widget$width)
+  expect_null(widget$height)
+  expect_identical(widget$sizingPolicy$defaultWidth, "100%")
+  expect_identical(widget$sizingPolicy$defaultHeight, "70vh")
+  expect_false(widget$sizingPolicy$knitr$figure)
   expect_length(widget$x$datasets, 2)
   expect_identical(
     vapply(widget$x$datasets, `[[`, character(1), "name"),
@@ -82,6 +87,17 @@ test_that("variant MSN widgets include named FASTA datasets and matching metadat
     expect_false(any(fasta_ids %in% c("ref-a", "ref-b")))
     expect_setequal(fasta_ids, metadata_ids)
   }
+})
+
+test_that("variant MSN widget height can be overridden", {
+  path <- make_variant_msn_fixture(
+    tempfile("variant-msn-height-"),
+    list("all--ref-a.fasta" = ">ref-a\nACGT\n>sample-a\nACGA\n>sample-b\nACGG")
+  )
+
+  widget <- variant_msn_plot(path, height = "500px")
+
+  expect_identical(widget$sizingPolicy$defaultHeight, "500px")
 })
 
 test_that("variant MSN plotting handles a single reference and insufficient input", {

@@ -4,7 +4,7 @@
 \alias{variant_msn_plot}
 \title{Plot an interactive MSN of variant data}
 \usage{
-variant_msn_plot(path, interactive = TRUE)
+variant_msn_plot(path, interactive = TRUE, height = "70vh")
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
@@ -12,6 +12,9 @@ pathogensurveillance output.}
 
 \item{interactive}{Whether to return an interactive HTML widget. Static MSN
 plots are not currently supported.}
+
+\item{height}{The widget height. Defaults to \code{"70vh"}; set to \code{NULL} to use
+knitr's chunk height.}
 }
 \value{
 An interactive \code{msnwidgetR} widget, or \code{NULL} when no alignments

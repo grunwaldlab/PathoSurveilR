@@ -14,6 +14,8 @@
 #'   rank and a `sample_id` column with the same values present in
 #'   `sample_meta`. Used to combine the trees together based on the smallest shared
 #'   taxonomic tree. Only used if `path` is not used.
+#' @param height The widget height in pixels. By default, height scales with the
+#'   maximum number of tips across the trees, between 700 and 1600 pixels.
 #' @param interactive Whether to use an HTML-based interactive format or not
 #'   (default: TRUE)
 #'
@@ -23,7 +25,8 @@
 #' @export
 plot_tree <- function(path = NULL, target = NULL, tree = NULL,
                                   sample_meta = NULL, ref_meta = NULL,
-                                  collapse_by_tax = NULL, interactive = FALSE) {
+                                  collapse_by_tax = NULL, interactive = FALSE,
+                                  height = NULL) {
   # Find and parse needed data
   if (! is.null(path)) {
     sample_meta <- find_ps_data(path, target = 'sample_metadata', simplify = TRUE)
@@ -51,6 +54,11 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
   # If no trees are found, return an empty list
   if (length(tree) == 0) {
     return(list())
+  }
+
+  if (is.null(height)) {
+    max_tips <- max(vapply(tree, function(t) length(t$tip.label), integer(1)))
+    height <- min(1600, max(700, 100 + max_tips * 18))
   }
 
   # Find which columns are used to provide colors to the trees, if any
@@ -87,7 +95,9 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
   
   # Remove the "Root" node label if present 
   tree <- lapply(tree, function(t) {
-    t$node.label[t$node.label == "Root"] <- ''
+    if (!is.null(t$node.label)) {
+      t$node.label[t$node.label == "Root"] <- ''
+    }
     return(t)
   })
   
@@ -95,6 +105,7 @@ plot_tree <- function(path = NULL, target = NULL, tree = NULL,
     tree = tree,
     metadata = list(metadata)[rep(1, length(tree))],
     aesthetics = list(c('tipLabelColor' = '_Sample_type_', 'tipLabelText' = 'name'))[rep(1, length(tree))],
+    height = height,
     manualZoomAndPanEnabled = FALSE
   )
 }
@@ -133,6 +144,8 @@ plot_map_widget <- function(path = NULL, width = NULL, height = NULL, elementID 
 #'   pathogensurveillance output.
 #' @param interactive Whether to return an interactive HTML widget. Static MSN
 #'   plots are not currently supported.
+#' @param height The widget height. Defaults to `"70vh"`; set to `NULL` to use
+#'   knitr's chunk height.
 #'
 #' @return An interactive `msnwidgetR` widget, or `NULL` when no alignments
 #'   contain at least two samples after removing their reference sequence.
@@ -143,7 +156,7 @@ plot_map_widget <- function(path = NULL, width = NULL, height = NULL, elementID 
 #' }
 #'
 #' @export
-variant_msn_plot <- function(path, interactive = TRUE) {
+variant_msn_plot <- function(path, interactive = TRUE, height = "70vh") {
   if (!isTRUE(interactive)) {
     stop("Static MSN plots are not supported; use `interactive = TRUE`.", call. = FALSE)
   }
@@ -213,7 +226,13 @@ variant_msn_plot <- function(path, interactive = TRUE) {
     return(NULL)
   }
 
-  msnwidgetR::msnwidget(datasets = datasets)
+  widget <- msnwidgetR::msnwidget(datasets = datasets)
+  widget$sizingPolicy$defaultWidth <- "100%"
+  if (!is.null(height)) {
+    widget$sizingPolicy$defaultHeight <- height
+    widget$sizingPolicy$knitr$figure <- FALSE
+  }
+  widget
 }
 
 
@@ -252,7 +271,7 @@ variant_msn_plot <- function(path, interactive = TRUE) {
 #' estimated_ani_heatmap(path, interactive = TRUE)
 #'
 #' @export
-estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, max_size = 100,
+estimated_ani_heatmap <- function(path, combine = FALSE, interactive = FALSE, max_size = 200,
                                   prefer_contextual = TRUE, height = NULL, width = NULL,
                                   dpi = 100, font_size = 8, max_label_length = 30) {
   if (combine) {
@@ -343,8 +362,144 @@ pocp_heatmap <- function(path, combine = FALSE, interactive = FALSE,
   
   make_heatmap(input_matrix = input_matrix, sample_data = sample_meta, ref_data = ref_meta,
                interactive = interactive, height = height, width = width, dpi = dpi,
-               font_size = font_size, max_label_length = max_label_length,
-               metric = "pocp")
+                font_size = font_size, max_label_length = max_label_length,
+                metric = "pocp")
+}
+
+
+#' Plot pairwise SNP differences from variant alignments
+#'
+#' Calculate pairwise differences from reference-specific SNP FASTA alignments
+#' produced by a pathogensurveillance run and plot them as a heatmap. Only
+#' positions where both sequences contain an unambiguous A, C, G, or T are
+#' compared. Alignments are combined into one matrix; pairs not present in the
+#' same alignment are shown as missing.
+#'
+#' @param path The path to one or more folders that contain pathogensurveillance
+#'   output.
+#' @param interactive Whether to return an HTML-based interactive widget
+#'   (default: FALSE).
+#' @param height The height in pixels. If not `interactive`, this is divided by
+#'   `dpi` to convert it to inches.
+#' @param width The width in pixels. If not `interactive`, this is divided by
+#'   `dpi` to convert it to inches.
+#' @param dpi How pixels are converted to inches.
+#' @param font_size Size of text used for labels.
+#' @param max_label_length Labels longer than this length will be shortened.
+#'
+#' @return An interactive HTML widget when `interactive = TRUE`, a static
+#'   heatmap otherwise, or `NULL` when there are no usable alignments.
+#'
+#' @examples
+#' \dontrun{
+#' variant_snp_heatmap("path/to/pathogensurveillance/output", interactive = TRUE)
+#' }
+#'
+#' @export
+variant_snp_heatmap <- function(path, interactive = FALSE, height = NULL, width = NULL,
+                                dpi = 100, font_size = 8, max_label_length = 30) {
+  alignment_paths <- find_ps_paths(
+    path,
+    target = "variants_fasta",
+    simplify = TRUE,
+    must_exist = FALSE
+  )
+  if (is.null(alignment_paths) || nrow(alignment_paths) == 0L) {
+    return(NULL)
+  }
+
+  alignments <- find_ps_data(path, target = "variants_fasta")
+  alignment_paths <- alignment_paths[order(alignment_paths$path), , drop = FALSE]
+  matrix_records <- lapply(seq_len(nrow(alignment_paths)), function(i) {
+    alignment <- alignments[[alignment_paths$path[i]]]
+    if (is.null(alignment) || !length(alignment) || nrow(alignment) < 2L) {
+      return(NULL)
+    }
+    list(
+      matrix = snp_distance_matrix(alignment),
+      reference_id = as.character(alignment_paths$reference_id[i])
+    )
+  })
+  matrix_records <- Filter(Negate(is.null), matrix_records)
+  if (!length(matrix_records)) {
+    return(NULL)
+  }
+
+  alignment_ids <- lapply(matrix_records, function(record) rownames(record$matrix))
+  all_alignment_ids <- unlist(alignment_ids, use.names = FALSE)
+  duplicated_ids <- unique(all_alignment_ids[duplicated(all_alignment_ids)])
+  if (length(duplicated_ids)) {
+    duplicate_details <- vapply(duplicated_ids, function(id) {
+      refs <- unique(vapply(
+        matrix_records[vapply(alignment_ids, function(ids) id %in% ids, logical(1))],
+        `[[`,
+        character(1),
+        "reference_id"
+      ))
+      paste0(id, " (references: ", paste(refs, collapse = ", "), ")")
+    }, character(1))
+    warning(
+      "Sequence IDs occur in multiple SNP alignments; combining reference-specific ",
+      "SNP distances may be inappropriate. Duplicate IDs: ",
+      paste(duplicate_details, collapse = "; "),
+      call. = FALSE
+    )
+  }
+  matrices <- lapply(matrix_records, `[[`, "matrix")
+  input_matrix <- combine_matrices(matrices)
+  sample_meta <- find_ps_data(path, target = "sample_metadata", simplify = TRUE)
+  ref_meta <- find_ps_data(path, target = "reference_metadata", simplify = TRUE)
+
+  make_heatmap(
+    input_matrix = input_matrix,
+    sample_data = sample_meta,
+    ref_data = ref_meta,
+    interactive = interactive,
+    height = height,
+    width = width,
+    dpi = dpi,
+    font_size = font_size,
+    max_label_length = max_label_length,
+    metric = "snp_distance"
+  )
+}
+
+
+#' @noRd
+snp_distance_matrix <- function(alignment) {
+  alignment <- toupper(as.matrix(alignment))
+  storage.mode(alignment) <- "character"
+  ids <- rownames(alignment)
+  if (is.null(ids) || anyNA(ids) || any(!nzchar(ids)) || anyDuplicated(ids)) {
+    stop("SNP alignment sequences must have unique, non-empty names.", call. = FALSE)
+  }
+
+  callable <- matrix(
+    alignment %in% c("A", "C", "G", "T"),
+    nrow = nrow(alignment),
+    ncol = ncol(alignment),
+    dimnames = dimnames(alignment)
+  )
+  distance <- matrix(
+    NA_real_,
+    nrow = nrow(alignment),
+    ncol = nrow(alignment),
+    dimnames = list(ids, ids)
+  )
+  diag(distance) <- 0
+  if (ncol(alignment)) {
+    for (i in seq_len(nrow(alignment) - 1L)) {
+      for (j in seq.int(i + 1L, nrow(alignment))) {
+        jointly_callable <- callable[i, ] & callable[j, ]
+        if (any(jointly_callable)) {
+          differences <- sum(alignment[i, jointly_callable] != alignment[j, jointly_callable])
+          distance[i, j] <- differences
+          distance[j, i] <- differences
+        }
+      }
+    }
+  }
+  distance
 }
 
 
@@ -362,7 +517,7 @@ pocp_heatmap <- function(path, combine = FALSE, interactive = FALSE,
 #' @param dpi How pixels are converted to inches
 #' @param font_size Size of text used for labels
 #' @param max_label_length Labels longer than this length will be shortened for display.
-#' @param metric Similarity metric used to label the interactive widget.
+#' @param metric Similarity or distance metric used to label the heatmap.
 #'
 #' @return An interactive HTML widget when `interactive = TRUE`, otherwise a
 #'   static heatmap.
@@ -370,7 +525,8 @@ pocp_heatmap <- function(path, combine = FALSE, interactive = FALSE,
 #' @keywords internal
 make_heatmap <- function(input_matrix, ref_data, sample_data, interactive = FALSE,
                          height = NULL, width = NULL, dpi = 100, font_size = 10,
-                         max_label_length = 30, metric = c("ani", "pocp")) {
+                         max_label_length = 30,
+                         metric = c("ani", "pocp", "snp_distance")) {
   metric <- match.arg(metric)
   input_matrix <- as.matrix(input_matrix)
   storage.mode(input_matrix) <- "numeric"
@@ -379,7 +535,7 @@ make_heatmap <- function(input_matrix, ref_data, sample_data, interactive = FALS
     input_matrix <- input_matrix * 100
   }
   if (nrow(input_matrix) != ncol(input_matrix)) {
-    stop("The similarity matrix must be square.", call. = FALSE)
+    stop("The matrix must be square.", call. = FALSE)
   }
   if (is.null(rownames(input_matrix)) || is.null(colnames(input_matrix))) {
     stop("The similarity matrix must have row and column names.", call. = FALSE)
@@ -422,7 +578,12 @@ make_heatmap <- function(input_matrix, ref_data, sample_data, interactive = FALS
     character()
   }
   if (interactive) {
-    metric_label <- if (metric == "ani") "Estimated ANI similarity (%)" else "Percentage of conserved proteins (%)"
+    metric_label <- switch(
+      metric,
+      ani = "Estimated ANI similarity (%)",
+      pocp = "Percentage of conserved proteins (%)",
+      snp_distance = "SNP differences (count)"
+    )
     matrix_payload <- lapply(seq_len(nrow(input_matrix)), function(row) {
       lapply(seq_len(ncol(input_matrix)), function(column) {
         value <- input_matrix[row, column]
@@ -461,14 +622,25 @@ make_heatmap <- function(input_matrix, ref_data, sample_data, interactive = FALS
   na_to_zero[is.na(na_to_zero)] <- 0
   dimnames(input_matrix) <- list(display_labels, display_labels)
   stats::hclust(stats::dist(na_to_zero), method = "complete") -> clustered
-  pheatmap::pheatmap(input_matrix,
-                     cluster_rows = clustered,
-                     cluster_cols = clustered,
-                     angle_col = 45,
-                     show_rownames = TRUE, labels_row = display_labels,
-                     labels_col = display_labels,
-                     fontsize_row = font_size, fontsize_col = font_size,
-                     width = width_inches, height = height_inches)
+  heatmap_args <- list(
+    input_matrix,
+    cluster_rows = clustered,
+    cluster_cols = clustered,
+    angle_col = 45,
+    show_rownames = TRUE,
+    labels_row = display_labels,
+    labels_col = display_labels,
+    fontsize_row = font_size,
+    fontsize_col = font_size,
+    width = width_inches,
+    height = height_inches
+  )
+  if (metric == "snp_distance") {
+    heatmap_args$color <- grDevices::colorRampPalette(
+      c("#a50026", "#f46d43", "#ffffbf", "#74add1", "#313695")
+    )(100)
+  }
+  do.call(pheatmap::pheatmap, heatmap_args)
 }
 
 

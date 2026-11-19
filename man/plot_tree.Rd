@@ -11,7 +11,8 @@ plot_tree(
   sample_meta = NULL,
   ref_meta = NULL,
   collapse_by_tax = NULL,
-  interactive = FALSE
+  interactive = FALSE,
+  height = NULL
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ taxonomic tree. Only used if \code{path} is not used.}
 
 \item{interactive}{Whether to use an HTML-based interactive format or not
 (default: TRUE)}
+
+\item{height}{The widget height in pixels. By default, height scales with the
+maximum number of tips across the trees, between 700 and 1600 pixels.}
 }
 \value{
 A list of plots, unless \code{collapse_by_tax} is used, in which case a

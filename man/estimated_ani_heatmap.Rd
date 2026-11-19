@@ -8,7 +8,7 @@ estimated_ani_heatmap(
   path,
   combine = FALSE,
   interactive = FALSE,
-  max_size = 100,
+  max_size = 200,
   prefer_contextual = TRUE,
   height = NULL,
   width = NULL,

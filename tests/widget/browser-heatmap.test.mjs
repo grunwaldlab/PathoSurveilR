@@ -163,6 +163,40 @@ function browserProbe() {
     require(columnPath.getAttribute("d") !== columnBeforeZoom, "column tree should track zoom");
     const zoomAlignment = assertAlignment(svg, "zoomed");
 
+    const rowLabel = svg.querySelector(".ani-heatmap-row-labels text");
+    const selectedRowIndex = Number(rowLabel.getAttribute("data-row-index"));
+    rowLabel.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    require(svg.getAttribute("data-selected-row") === String(selectedRowIndex),
+      "selecting a row label should select that row");
+    require(svg.getAttribute("data-selected-column") === String(selectedRowIndex),
+      "selecting a row label should select the corresponding column");
+    const cellAnnotations = [...svg.querySelectorAll(".ani-heatmap-value")]
+      .map((label) => label.textContent);
+    require(cellAnnotations.includes("100"),
+      "a 100.0 ANI cell should display as 100");
+    require(!cellAnnotations.includes("100.0"),
+      "cell annotations should not retain an unnecessary decimal");
+    svg.querySelector(".ani-heatmap-row-labels text[data-row-index=\\"" + selectedRowIndex + "\\"]")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    require(svg.getAttribute("data-selected-row") === "",
+      "clicking the selected row again should clear the paired selection");
+    require(svg.getAttribute("data-selected-column") === "",
+      "clearing a row selection should clear its paired column");
+
+    const columnLabel = svg.querySelector(".ani-heatmap-column-labels text");
+    const selectedColumnIndex = Number(columnLabel.getAttribute("data-column-index"));
+    columnLabel.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    require(svg.getAttribute("data-selected-column") === String(selectedColumnIndex),
+      "selecting a column label should select that column");
+    require(svg.getAttribute("data-selected-row") === String(selectedColumnIndex),
+      "selecting a column label should select the corresponding row");
+    svg.querySelector(".ani-heatmap-column-labels text[data-column-index=\\"" + selectedColumnIndex + "\\"]")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    require(svg.getAttribute("data-selected-row") === "",
+      "clicking the selected column again should clear the paired selection");
+    require(svg.getAttribute("data-selected-column") === "",
+      "clearing a column selection should clear its paired row");
+
     const rowBeforePan = rowPath.getAttribute("d");
     const columnBeforePan = columnPath.getAttribute("d");
     const focusBeforePan = focus(svg);
@@ -211,11 +245,89 @@ function browserProbe() {
     require(smallSvg?.getAttribute("data-dendrograms") === "false",
       \`small view should hide both trees (widget \${smallElement.clientWidth}x\${smallElement.clientHeight}, plot \${smallSvg?.getAttribute("data-plot-side")})\`);
 
+    const metricHost = document.createElement("div");
+    metricHost.style.width = "800px";
+    metricHost.style.height = "700px";
+    const metricElement = document.createElement("div");
+    metricElement.className = "psHeatmap";
+    metricHost.append(metricElement);
+    document.body.append(metricHost);
+    const metricBinding = window.__heatmapDefinition.factory(metricElement);
+    const metricLabels = ["alpha", "beta", "gamma"];
+    const similarityMatrix = [
+      [100, 60, 60],
+      [60, 100, 60],
+      [60, 60, 100],
+    ];
+    const distanceMatrix = [
+      [0, 4, null],
+      [4, 0, 4],
+      [null, 4, 0],
+    ];
+    metricBinding.renderValue({
+      labels: metricLabels,
+      matrix: similarityMatrix,
+      metric: "ani",
+      metric_label: "Estimated ANI similarity (%)",
+    });
+    const similaritySvg = metricElement.querySelector("svg");
+    metricBinding.renderValue({
+      labels: metricLabels,
+      matrix: distanceMatrix,
+      metric: "snp_distance",
+      metric_label: "SNP differences (count)",
+    });
+    const distanceSvg = metricElement.querySelector("svg");
+    const distanceColors = [...distanceSvg.querySelectorAll(".ani-heatmap-cell")]
+      .map((cell) => cell.getAttribute("fill"));
+    const missingColor = "#b8b8b8";
+    const diagonalColor = (svg) => svg.querySelector(
+      '.ani-heatmap-cell[data-row="0"][data-column="0"]',
+    ).getAttribute("fill");
+    const offDiagonalColors = (svg) => [...svg.querySelectorAll(".ani-heatmap-cell")]
+      .filter((cell) => cell.dataset.row !== cell.dataset.column
+        && cell.getAttribute("fill") !== missingColor)
+      .map((cell) => cell.getAttribute("fill"));
+    require(diagonalColor(distanceSvg) === diagonalColor(similaritySvg),
+      "zero SNP differences should use the high-similarity end of the ANI palette");
+    require(offDiagonalColors(distanceSvg).includes(offDiagonalColors(similaritySvg)[0]),
+      "larger SNP distances should use the low-similarity end of the ANI palette");
+    require(distanceColors.includes(missingColor), "missing SNP comparisons should remain gray");
+    const distanceText = metricElement.querySelector(".ani-heatmap-legend").textContent;
+    require(!distanceText.includes("%"), "SNP-distance legend should not show percentages");
+    require(distanceText.includes("0") && distanceText.includes("4"),
+      "SNP-distance legend should display integer count endpoints");
+    require(distanceSvg.getAttribute("aria-label") === "Pairwise SNP distance heatmap",
+      "SNP-distance heatmap should have distance-specific accessible labeling");
+    require(distanceSvg.querySelectorAll(".ani-heatmap-cell").length === 9,
+      "all observed and missing SNP comparisons should render");
+    require([...distanceSvg.querySelectorAll(".ani-heatmap-cell title")]
+      .some((title) => title.textContent.includes("SNP differences (count): 4")),
+    "SNP-distance cell titles should show the metric and integer count");
+    const tooltipCell = [...distanceSvg.querySelectorAll(".ani-heatmap-cell")].find((cell) =>
+      cell.querySelector("title")?.textContent.includes("SNP differences (count): 4"),
+    );
+    const tooltipBounds = tooltipCell.getBoundingClientRect();
+    distanceSvg.querySelector(".ani-heatmap-interaction").dispatchEvent(new PointerEvent(
+      "pointermove",
+      {
+        bubbles: true,
+        pointerType: "mouse",
+        clientX: tooltipBounds.left + tooltipBounds.width / 2,
+        clientY: tooltipBounds.top + tooltipBounds.height / 2,
+      },
+    ));
+    const tooltipText = metricElement.querySelector(".ani-heatmap-tooltip").textContent;
+    require(tooltipText.includes("SNP differences (count): 4") && !tooltipText.includes("%"),
+      "SNP-distance hover text should show an integer count without a percent sign");
+
     document.body.setAttribute("data-browser-result", btoa(JSON.stringify({
       ok: true,
       initialAlignment,
       zoomAlignment,
       panAlignment,
+      rowAxisSelectionPaired: true,
+      columnAxisSelectionPaired: true,
       zoomScale: afterResize.scale,
       resizeFocusPreserved: true,
       smallTreesHidden: true,
@@ -273,6 +385,8 @@ test("browser keeps dendrogram leaves aligned through zoom, pan, and resize", {
     assert.ok(result.initialAlignment.visibleRows > 0);
     assert.ok(result.zoomAlignment.visibleRows > 0);
     assert.ok(result.panAlignment.visibleRows > 0);
+    assert.ok(result.rowAxisSelectionPaired);
+    assert.ok(result.columnAxisSelectionPaired);
     assert.ok(result.resizeFocusPreserved);
     assert.ok(result.smallTreesHidden);
     console.log(`browser alignment check (${source}): ${JSON.stringify(result)}`);

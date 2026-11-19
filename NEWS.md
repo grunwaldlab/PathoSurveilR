@@ -1,10 +1,17 @@
 # 0.4.9
 
+## Added
+
+- Added a combined SNP-difference heatmap based on callable sites in variant alignments.
+
 ## Improvements
 
 - Replaced interactive ANI and POCP heatmaps with a bundled, offline-capable widget.
 - Added browser-side hierarchical clustering and synchronized dendrograms to interactive heatmaps.
+- Synchronize row and column highlighting when selecting a shared matrix label.
+- Format interactive cell annotations to three significant digits.
 - Use `msnwidgetR` for interactive variant minimum spanning networks.
+- Set variant MSN widgets to a default height of 70vh, capped by viewport and pixel limits.
 
 ## Bug fixes
 

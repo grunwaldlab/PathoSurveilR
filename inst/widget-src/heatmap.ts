@@ -19,7 +19,7 @@ type HeatmapPayload = {
   full_labels?: string[];
   matrix?: Array<Array<number | null>>;
   sample_ids?: string[];
-  metric?: "ani" | "pocp";
+  metric?: "ani" | "pocp" | "snp_distance";
   metric_label?: string;
 };
 
@@ -63,7 +63,8 @@ const mountHeatmap = (
   }
 
   const output = (payload ?? {}) as HeatmapPayload;
-  const metricName = output.metric === "pocp" ? "POCP" : "ANI";
+  const isDistance = output.metric === "snp_distance";
+  const metricName = isDistance ? "SNP distance" : output.metric === "pocp" ? "POCP" : "ANI";
   const labels = Array.isArray(output.labels) ? output.labels : [];
   const matrix = Array.isArray(output.matrix) ? output.matrix : [];
   const validMatrix = matrix.length === labels.length
@@ -115,7 +116,9 @@ const mountHeatmap = (
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   const colorScale = scaleSequential(interpolateViridis).domain(
-    minValue === maxValue ? [minValue - 0.5, maxValue + 0.5] : [minValue, maxValue],
+    minValue === maxValue
+      ? isDistance ? [maxValue + 0.5, minValue - 0.5] : [minValue - 0.5, maxValue + 0.5]
+      : isDistance ? [maxValue, minValue] : [minValue, maxValue],
   );
   const missingColor = "#b8b8b8";
   const toolbarHost = container.parentElement ?? container;
@@ -241,7 +244,10 @@ const mountHeatmap = (
 
   const legend = document.createElement("div");
   legend.className = "ani-heatmap-legend";
-  legend.setAttribute("aria-label", `${metricName} similarity color legend`);
+  legend.setAttribute(
+    "aria-label",
+    isDistance ? "SNP distance color legend" : `${metricName} similarity color legend`,
+  );
   Object.assign(legend.style, {
     display: "flex",
     alignItems: "center",
@@ -270,7 +276,7 @@ const mountHeatmap = (
     gap: "14px",
   });
   const scaleTitle = document.createElement("span");
-  scaleTitle.textContent = output.metric_label ?? "Similarity (%)";
+  scaleTitle.textContent = output.metric_label ?? (isDistance ? "SNP differences (count)" : "Similarity (%)");
   const scaleRange = document.createElement("div");
   Object.assign(scaleRange.style, {
     display: "grid",
@@ -279,16 +285,18 @@ const mountHeatmap = (
     gap: "7px",
   });
   const scaleMinimum = document.createElement("span");
-  scaleMinimum.textContent = formatValue(minValue);
+  scaleMinimum.textContent = formatValue(minValue, isDistance);
   const gradient = document.createElement("span");
   gradient.setAttribute("aria-hidden", "true");
   Object.assign(gradient.style, {
     height: "12px",
     border: "1px solid #777",
-    background: `linear-gradient(to right, ${interpolateViridis(0)}, ${interpolateViridis(0.25)}, ${interpolateViridis(0.5)}, ${interpolateViridis(0.75)}, ${interpolateViridis(1)})`,
+    background: isDistance
+      ? `linear-gradient(to right, ${interpolateViridis(1)}, ${interpolateViridis(0.75)}, ${interpolateViridis(0.5)}, ${interpolateViridis(0.25)}, ${interpolateViridis(0)})`
+      : `linear-gradient(to right, ${interpolateViridis(0)}, ${interpolateViridis(0.25)}, ${interpolateViridis(0.5)}, ${interpolateViridis(0.75)}, ${interpolateViridis(1)})`,
   });
   const scaleMaximum = document.createElement("span");
-  scaleMaximum.textContent = formatValue(maxValue);
+  scaleMaximum.textContent = formatValue(maxValue, isDistance);
   scaleRange.append(scaleMinimum, gradient, scaleMaximum);
   legendDetails.append(scaleRange);
   const missingLegend = document.createElement("div");
@@ -377,7 +385,10 @@ const mountHeatmap = (
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `Pairwise ${metricName} similarity heatmap`);
+  svg.setAttribute(
+    "aria-label",
+    isDistance ? "Pairwise SNP distance heatmap" : `Pairwise ${metricName} similarity heatmap`,
+  );
   svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
   svg.setAttribute("width", String(svgWidth));
   svg.setAttribute("height", String(svgHeight));
@@ -514,7 +525,7 @@ const mountHeatmap = (
     .attr("shape-rendering", "crispEdges");
   plotCells.append("title");
   plotCells.select("title").text((cell) =>
-    `${plotFullLabels[cell.row]} versus ${plotFullLabels[cell.column]}\n${output.metric_label ?? "Similarity"}: ${cell.value === null ? "Missing" : formatValue(cell.value)}`,
+    `${plotFullLabels[cell.row]} versus ${plotFullLabels[cell.column]}\n${output.metric_label ?? (isDistance ? "SNP differences" : "Similarity")}: ${cell.value === null ? "Missing" : formatValue(cell.value, isDistance)}`,
   );
 
   const cellSize = plotSide / labels.length;
@@ -561,7 +572,7 @@ const mountHeatmap = (
       hideCellTooltip();
       return;
     }
-    tooltip.textContent = `Row: ${plotFullLabels[cell.row]}\nColumn: ${plotFullLabels[cell.column]}\n${output.metric_label ?? "Similarity"}: ${cell.value === null ? "Missing" : formatValue(cell.value)}`;
+    tooltip.textContent = `Row: ${plotFullLabels[cell.row]}\nColumn: ${plotFullLabels[cell.column]}\n${output.metric_label ?? (isDistance ? "SNP differences" : "Similarity")}: ${cell.value === null ? "Missing" : formatValue(cell.value, isDistance)}`;
     tooltip.style.display = "block";
     tooltip.setAttribute("aria-hidden", "false");
     const rootBounds = root.getBoundingClientRect();
@@ -774,7 +785,7 @@ const mountHeatmap = (
         ) {
           return [];
         }
-        return [{ ...cell, label: cell.value.toFixed(1) }];
+        return [{ ...cell, label: formatCellValue(cell.value, isDistance) }];
       })
       : [];
     valueLabels.selectAll<SVGTextElement, (typeof valueLabelsToShow)[number]>("text")
@@ -796,12 +807,16 @@ const mountHeatmap = (
 
   const selectRow = (row: number) => {
     hideCellTooltip();
-    selectedRow = selectedRow === row ? null : row;
+    const selected = selectedRow === row && selectedColumn === row;
+    selectedRow = selected ? null : row;
+    selectedColumn = selected ? null : row;
     renderZoom();
   };
   const selectColumn = (column: number) => {
     hideCellTooltip();
-    selectedColumn = selectedColumn === column ? null : column;
+    const selected = selectedRow === column && selectedColumn === column;
+    selectedRow = selected ? null : column;
+    selectedColumn = selected ? null : column;
     renderZoom();
   };
   const selectCell = (row: number, column: number) => {
@@ -1031,8 +1046,12 @@ function truncateLabel(label: string, maxWidth: number, fontSize: number): strin
   return maxCharacters <= 1 ? "…" : `${label.slice(0, maxCharacters - 1)}…`;
 }
 
-function formatValue(value: number): string {
-  return `${value.toFixed(2)}%`;
+function formatValue(value: number, isDistance = false): string {
+  return isDistance ? String(Math.round(value)) : `${value.toFixed(2)}%`;
+}
+
+function formatCellValue(value: number, isDistance = false): string {
+  return isDistance ? String(Math.round(value)) : Number(value.toPrecision(3)).toString();
 }
 
 function cssDimension(element: HTMLElement, property: string, fallback: number): number {

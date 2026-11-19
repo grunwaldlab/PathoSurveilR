@@ -14,7 +14,7 @@ make_heatmap(
   dpi = 100,
   font_size = 10,
   max_label_length = 30,
-  metric = c("ani", "pocp")
+  metric = c("ani", "pocp", "snp_distance")
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ make_heatmap(
 
 \item{max_label_length}{Labels longer than this length will be shortened for display.}
 
-\item{metric}{Similarity metric used to label the interactive widget.}
+\item{metric}{Similarity or distance metric used to label the heatmap.}
 }
 \value{
 An interactive HTML widget when \code{interactive = TRUE}, otherwise a
