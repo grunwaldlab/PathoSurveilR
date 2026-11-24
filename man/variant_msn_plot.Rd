@@ -4,7 +4,7 @@
 \alias{variant_msn_plot}
 \title{Plot an interactive MSN of variant data}
 \usage{
-variant_msn_plot(path, interactive = TRUE, height = "70vh")
+variant_msn_plot(path, interactive = TRUE, height = "70vh", options = NULL)
 }
 \arguments{
 \item{path}{The path to one or more folders that contain
@@ -15,6 +15,8 @@ plots are not currently supported.}
 
 \item{height}{The widget height. Defaults to \code{"70vh"}; set to \code{NULL} to use
 knitr's chunk height.}
+
+\item{options}{A list of options passed to \code{msnwidgetR::msnwidget()}.}
 }
 \value{
 An interactive \code{msnwidgetR} widget, or \code{NULL} when no alignments

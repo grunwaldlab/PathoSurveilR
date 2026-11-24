@@ -146,6 +146,7 @@ plot_map_widget <- function(path = NULL, width = NULL, height = NULL, elementID 
 #'   plots are not currently supported.
 #' @param height The widget height. Defaults to `"70vh"`; set to `NULL` to use
 #'   knitr's chunk height.
+#' @param options A list of options passed to `msnwidgetR::msnwidget()`.
 #'
 #' @return An interactive `msnwidgetR` widget, or `NULL` when no alignments
 #'   contain at least two samples after removing their reference sequence.
@@ -156,57 +157,89 @@ plot_map_widget <- function(path = NULL, width = NULL, height = NULL, elementID 
 #' }
 #'
 #' @export
-variant_msn_plot <- function(path, interactive = TRUE, height = "70vh") {
+variant_msn_plot <- function(path, interactive = TRUE, height = "70vh", options = NULL) {
   if (!isTRUE(interactive)) {
     stop("Static MSN plots are not supported; use `interactive = TRUE`.", call. = FALSE)
   }
 
-  alignment_paths <- find_ps_paths(
-    path,
-    target = "variants_fasta",
-    simplify = TRUE,
-    must_exist = FALSE
-  )
+  # find alignment paths
+  alignment_paths <- find_ps_paths(path, target = "variants_fasta", simplify = TRUE, must_exist = FALSE)
   if (is.null(alignment_paths) || nrow(alignment_paths) == 0L) {
     return(NULL)
   }
 
+  # Read shared metadata once; each alignment gets the matching rows below.
   alignments <- find_ps_data(path, target = "variants_fasta")
   sample_data <- find_ps_data(path, target = "sample_metadata", simplify = TRUE)
   reference_data <- find_ps_data(path, target = "reference_metadata", simplify = TRUE)
 
+  
   datasets <- lapply(seq_len(nrow(alignment_paths)), function(i) {
     alignment_path <- alignment_paths$path[i]
+    # validate particular alignment in set
     alignment <- alignments[[alignment_path]]
     if (is.null(alignment) || !length(alignment)) {
       return(NULL)
     }
 
+    # find reference id that alignment maps to
     reference_id <- as.character(alignment_paths$reference_id[i])
     alignment_ids <- rownames(alignment)
-    sample_rows <- !is.na(alignment_ids) & alignment_ids != reference_id
-    alignment <- alignment[sample_rows, , drop = FALSE]
-    alignment_ids <- alignment_ids[sample_rows]
-    if (length(alignment_ids) < 2L) {
-      return(NULL)
-    }
 
+    # load alignment & find alignment sequences
     alignment <- as.character(alignment)
     sequences <- apply(alignment, 1L, paste0, collapse = "")
 
-    metadata <- data.frame(id = alignment_ids, stringsAsFactors = FALSE)
-    if (!is.null(sample_data) && "sample_id" %in% names(sample_data)) {
-      sample_rows <- match(alignment_ids, as.character(sample_data$sample_id))
-      metadata <- as.data.frame(sample_data[sample_rows, , drop = FALSE])
-      metadata$sample_id <- NULL
-      metadata$id <- alignment_ids
-      metadata <- metadata[, c("id", setdiff(names(metadata), "id")), drop = FALSE]
-    }
-
-    reference_name <- if (
-      !is.null(reference_data) &&
-        all(c("ref_id", "ref_name") %in% names(reference_data))
-    ) {
+     
+    metadata <- lapply(alignment_ids, function(id) {
+      # normalize metadata columns if id is a reference id
+      if (identical(id, reference_id)) {
+        row <- if (!is.null(reference_data) && "ref_id" %in% names(reference_data)) {
+          reference_data[match(id, as.character(reference_data$ref_id)), , drop = FALSE]
+        } else data.frame()
+        if (nrow(row)) {
+          # remove reference-specific column tags
+          names(row) <- sub("^ref_", "", names(row))
+          row$id <- id
+          if ("id" %in% names(row)) {
+            row$ref_id <- NULL
+          }
+          if ("color_by" %in% names(row)) {
+            row$color_by <- as.character(row$color_by)
+          }
+        }
+        record <- if (nrow(row)) {
+          as.list(row[1, , drop = FALSE]) 
+        } else {
+             list(id = id)
+        }
+        record$type <- "reference"
+        record
+       # normalize metadata columns if id is a sample id   
+       } else {
+         row <- if (!is.null(sample_data) && "sample_id" %in% names(sample_data)) {
+           sample_data[match(id, as.character(sample_data$sample_id)), , drop = FALSE]
+         } else data.frame()
+         if (nrow(row)) {
+           names(row)[names(row) == "sample_id"] <- "id"
+           # row$id <- id
+         }
+         record <- if (nrow(row)) {
+           as.list(row[1, , drop = FALSE]) 
+         } else {
+           list(id = id)
+         }
+         record$type <- "sample"
+         record
+       }
+     })
+     
+     metadata <- lapply(metadata, function(row) {
+       row[setdiff(names(row), "id")] <- lapply(row[setdiff(names(row), "id")], as.character)
+       row
+     })
+     
+    reference_name <- if (!is.null(reference_data) && all(c("ref_id", "ref_name") %in% names(reference_data))) {
       reference_data$ref_name[match(reference_id, reference_data$ref_id)]
     } else {
       NA_character_
@@ -215,18 +248,18 @@ variant_msn_plot <- function(path, interactive = TRUE, height = "70vh") {
       reference_name <- reference_id
     }
 
-    list(
-      name = paste0(reference_name, " (", reference_id, ")"),
-      fasta = paste(paste0(">", alignment_ids, "\n", sequences), collapse = "\n"),
-      metadata = metadata
-    )
+      list(name = paste0(reference_name, " (", reference_id, ")"), fasta = paste(paste0(">", alignment_ids, "\n", sequences), collapse = "\n"), metadata = metadata)
   })
   datasets <- Filter(Negate(is.null), datasets)
   if (!length(datasets)) {
     return(NULL)
   }
 
-  widget <- msnwidgetR::msnwidget(datasets = datasets)
+   widget <- msnwidgetR::msnwidget(
+     name = "Variant alignments",
+     data = datasets,
+     options = options
+   )
   widget$sizingPolicy$defaultWidth <- "100%"
   if (!is.null(height)) {
     widget$sizingPolicy$defaultHeight <- height
